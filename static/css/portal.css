@@ -1,0 +1,56 @@
+/* Portal público: fondo blanco, acentos morados */
+body.portal { background: #fff; }
+
+.portal-nav { border-bottom: 1px solid var(--mm-borde); background: #fff; }
+.portal-nav img { height: 58px; width: auto; }
+
+.hero {
+  background: var(--mm-negro); color: #fff; position: relative; overflow: hidden;
+  padding: 3.5rem 0 5.5rem;
+}
+.hero::after {
+  content: ""; position: absolute; right: -120px; top: -120px; width: 420px; height: 420px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(115,27,236,.55), transparent 70%);
+}
+.hero h1 { font-size: clamp(1.8rem, 3.5vw, 2.6rem); }
+.hero p { color: #cfc8db; max-width: 560px; }
+
+.buscador { background: #fff; border-radius: 1rem; box-shadow: 0 12px 40px rgba(18,16,20,.12);
+  padding: 1.25rem; margin-top: -3.5rem; position: relative; z-index: 2; border: 1px solid var(--mm-borde); }
+.buscador .form-label { font-size: .78rem; font-weight: 600; color: var(--mm-gris); margin-bottom: .25rem; }
+
+.card-prop { border: 1px solid var(--mm-borde); border-radius: 1rem; overflow: hidden; height: 100%;
+  transition: transform .15s ease, box-shadow .15s ease; background: #fff; }
+.card-prop:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(18,16,20,.10); }
+.card-prop .imagen { aspect-ratio: 4/3; width: 100%; object-fit: cover; display: block; }
+.card-prop .etiqueta-op { position: absolute; top: .75rem; left: .75rem; background: var(--mm-morado); color: #fff;
+  font-size: .75rem; font-weight: 600; padding: .25rem .65rem; border-radius: 999px; }
+.card-prop .precio { font-family: "Montserrat"; font-weight: 700; font-size: 1.25rem; color: var(--mm-negro); }
+.card-prop .ubicacion { color: var(--mm-gris); font-size: .88rem; }
+.card-prop .rasgos { display: flex; gap: 1rem; color: var(--mm-gris); font-size: .85rem; border-top: 1px solid var(--mm-borde);
+  padding-top: .65rem; margin-top: .65rem; }
+
+.ficha-carrusel img { aspect-ratio: 16/10; object-fit: cover; width: 100%; border-radius: 1rem; }
+.ficha-carrusel .carousel-indicators [data-bs-target] { background-color: #fff; }
+.ficha-miniaturas { display: flex; gap: .5rem; overflow-x: auto; margin-top: .6rem; }
+.ficha-miniaturas button { border: 2px solid transparent; padding: 0; border-radius: .5rem; overflow: hidden; flex: 0 0 auto; background: none; }
+.ficha-miniaturas button.active { border-color: var(--mm-morado); }
+.ficha-miniaturas img { width: 86px; height: 60px; object-fit: cover; display: block; }
+
+.ficha-precio { font-family: "Montserrat"; font-size: 2rem; font-weight: 700; }
+.ficha-rasgos { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .75rem; }
+.ficha-rasgos div { background: var(--mm-morado-claro); border-radius: .75rem; padding: .75rem; text-align: center; }
+.ficha-rasgos .num { font-family: "Montserrat"; font-weight: 700; font-size: 1.2rem; color: var(--mm-morado-oscuro); }
+.ficha-rasgos .txt { font-size: .78rem; color: var(--mm-gris); }
+
+.panel-consulta { border: 1px solid var(--mm-borde); border-radius: 1rem; padding: 1.5rem; position: sticky; top: 1rem; }
+
+.portal-footer { background: var(--mm-negro); color: #b5aec0; padding: 2rem 0; margin-top: 4rem; font-size: .9rem; }
+.portal-footer strong { color: #fff; }
+
+/* Ofrecer mi propiedad */
+.hero.hero-compacto { padding: 2.5rem 0; }
+.panel-ofrecer { border: 1px solid var(--mm-borde); border-radius: 1rem; padding: 1.5rem; }
+.aviso-datos { display: flex; gap: .75rem; background: var(--mm-morado-claro); border-radius: .75rem;
+  padding: .9rem 1rem; font-size: .88rem; color: #3b3542; }
+.aviso-datos .bi { color: var(--mm-morado-oscuro); font-size: 1.2rem; }

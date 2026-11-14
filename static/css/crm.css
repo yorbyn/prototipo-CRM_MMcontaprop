@@ -1,0 +1,94 @@
+/* CRM privado: barra lateral negra, contenido claro */
+body.crm { background: #f6f4f9; min-height: 100vh; }
+
+.crm-sidebar {
+  width: 248px; background: var(--mm-negro); color: #cfc8db;
+  position: fixed; inset: 0 auto 0 0; display: flex; flex-direction: column; z-index: 1030;
+}
+.crm-sidebar .logo-caja { background: #fff; margin: 1rem; border-radius: .75rem; padding: .6rem .8rem; }
+.crm-sidebar .logo-caja img { width: 100%; height: auto; display: block; }
+.crm-sidebar .etiqueta { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: #8b8496; padding: 1rem 1.5rem .4rem; }
+.crm-sidebar .nav-link {
+  color: #d9d3e4; padding: .6rem 1.5rem; display: flex; gap: .75rem; align-items: center;
+  border-left: 3px solid transparent; font-weight: 500;
+}
+.crm-sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.05); }
+.crm-sidebar .nav-link.activo { color: #fff; background: rgba(115,27,236,.22); border-left-color: var(--mm-morado); }
+.crm-sidebar .nav-link .badge { margin-left: auto; background: var(--mm-morado); }
+.crm-sidebar .pie { margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,.08); font-size: .85rem; }
+
+.crm-main { margin-left: 248px; padding: 1.75rem 2rem 3rem; }
+.crm-encabezado { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.crm-encabezado h1 { font-size: 1.6rem; margin: 0; }
+.crm-encabezado .sub { color: var(--mm-gris); font-size: .92rem; }
+
+.tarjeta { background: #fff; border: 1px solid var(--mm-borde); border-radius: .9rem; }
+.tarjeta > .tarjeta-titulo { padding: .9rem 1.25rem; border-bottom: 1px solid var(--mm-borde); font-weight: 600;
+  display: flex; align-items: center; justify-content: space-between; }
+.tarjeta > .tarjeta-cuerpo { padding: 1.25rem; }
+
+.kpi { background: #fff; border: 1px solid var(--mm-borde); border-radius: .9rem; padding: 1.1rem 1.25rem; height: 100%; }
+.kpi .valor { font-family: "Montserrat"; font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
+.kpi .nombre { color: var(--mm-gris); font-size: .85rem; }
+.kpi.destacado { background: var(--mm-morado); color: #fff; border-color: var(--mm-morado); }
+.kpi.destacado .nombre { color: #e5d6fd; }
+
+.table-crm { margin: 0; }
+.table-crm thead th { background: #faf8fd; color: var(--mm-gris); font-size: .78rem; text-transform: uppercase;
+  letter-spacing: .04em; font-weight: 600; border-bottom: 1px solid var(--mm-borde); white-space: nowrap; }
+.table-crm td { vertical-align: middle; }
+.table-crm tbody tr:hover { background: #fbf9fe; }
+.miniatura { width: 64px; height: 46px; object-fit: cover; border-radius: .4rem; }
+.miniatura.foto-vacia { font-size: .7rem; }
+
+.dato-privado { background: var(--mm-morado-claro); border: 1px dashed var(--mm-lila); border-radius: .5rem; padding: .5rem .75rem; }
+.dato-privado .bi { color: var(--mm-morado-oscuro); }
+
+.galeria-crm { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
+.galeria-crm .foto { position: relative; border-radius: .6rem; overflow: hidden; border: 2px solid transparent; }
+.galeria-crm .foto.principal { border-color: var(--mm-morado); }
+.galeria-crm img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.galeria-crm .acciones { display: flex; gap: .25rem; padding: .35rem; background: #fff; }
+
+.nota { border-left: 3px solid var(--mm-lila); padding: .35rem 0 .35rem .85rem; margin-bottom: .9rem; }
+.nota.auto { border-left-color: #cfc8db; color: var(--mm-gris); font-size: .9rem; }
+.nota .fecha { font-size: .75rem; color: var(--mm-gris); }
+
+.filtros { background: #fff; border: 1px solid var(--mm-borde); border-radius: .9rem; padding: 1rem; margin-bottom: 1rem; }
+
+@media (max-width: 991px) {
+  .crm-sidebar { position: static; width: 100%; }
+  .crm-main { margin-left: 0; padding: 1rem; }
+}
+
+/* Login */
+body.login { background: var(--mm-negro); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.login-caja { background: #fff; border-radius: 1.1rem; padding: 2.25rem; width: 100%; max-width: 410px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.login-caja img { max-width: 260px; display: block; margin: 0 auto 1.25rem; }
+.login-franja { height: 4px; background: linear-gradient(90deg, var(--mm-morado), var(--mm-lila)); border-radius: 4px; margin-bottom: 1.5rem; }
+
+/* Agenda */
+.item-agenda { display: flex; gap: 1rem; align-items: flex-start; padding: .75rem 0; border-bottom: 1px solid var(--mm-borde); }
+.item-agenda:last-child { border-bottom: 0; padding-bottom: 0; }
+.item-agenda:first-child { padding-top: 0; }
+.item-agenda .cuando { flex: 0 0 64px; text-align: center; background: var(--mm-morado-claro); border-radius: .6rem; padding: .35rem .25rem; }
+.item-agenda .cuando .dia { font-weight: 600; font-size: .85rem; color: var(--mm-morado-oscuro); }
+.item-agenda .cuando .hora { font-size: .78rem; color: var(--mm-gris); }
+.item-agenda.vencida .cuando { background: var(--mm-morado); }
+.item-agenda.vencida .cuando .dia, .item-agenda.vencida .cuando .hora { color: #fff; }
+.tarjeta.borde-morado { border-color: var(--mm-lila); }
+
+/* Pasos del embudo en la ficha de oportunidad */
+.embudo-pasos { display: flex; gap: .35rem; flex-wrap: wrap; }
+.embudo-pasos .paso { flex: 1 1 0; min-width: 100px; text-align: center; padding: .45rem .5rem; font-size: .82rem; font-weight: 600;
+  background: #fff; border: 1px solid var(--mm-borde); color: var(--mm-gris); border-radius: .5rem; }
+.embudo-pasos .paso.actual { background: var(--mm-morado); border-color: var(--mm-morado); color: #fff; }
+
+/* Indicadores: embudo (una serie, un tono) */
+.fila-embudo { display: grid; grid-template-columns: 110px 1fr 48px; gap: .75rem; align-items: center; padding: .3rem 0; }
+.fila-embudo:hover .barra { background: var(--mm-morado-oscuro); }
+.fila-embudo .nombre { font-size: .88rem; color: var(--mm-negro); }
+.fila-embudo .pista { height: 14px; }
+.fila-embudo .barra { height: 100%; min-width: 2px; background: var(--mm-morado); border-radius: 0 4px 4px 0; }
+.fila-embudo .valor { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cifra { font-family: "Montserrat"; font-size: 1.5rem; font-weight: 700; }

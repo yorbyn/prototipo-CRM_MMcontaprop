@@ -1,0 +1,79 @@
+/* Identidad MMCONTAPROP: morado corporativo, negro y blanco */
+:root {
+  --mm-morado: #731bec;
+  --mm-morado-oscuro: #5a0fc4;
+  --mm-morado-claro: #f1e8fe;
+  --mm-lila: #b48cf2;
+  --mm-negro: #121014;
+  --mm-gris: #6b6675;
+  --mm-borde: #e7e3ee;
+  --bs-primary: #731bec;
+  --bs-primary-rgb: 115, 27, 236;
+  --bs-link-color: #731bec;
+  --bs-link-color-rgb: 115, 27, 236;
+  --bs-link-hover-color: #5a0fc4;
+  --bs-link-hover-color-rgb: 90, 15, 196;
+  --bs-body-font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bs-body-color: #1d1a22;
+}
+
+h1, h2, h3, h4, .titulo-marca { font-family: "Montserrat", var(--bs-body-font-family); font-weight: 700; letter-spacing: -.01em; }
+
+.btn-primary {
+  --bs-btn-bg: var(--mm-morado); --bs-btn-border-color: var(--mm-morado);
+  --bs-btn-hover-bg: var(--mm-morado-oscuro); --bs-btn-hover-border-color: var(--mm-morado-oscuro);
+  --bs-btn-active-bg: var(--mm-morado-oscuro); --bs-btn-active-border-color: var(--mm-morado-oscuro);
+  --bs-btn-disabled-bg: var(--mm-lila); --bs-btn-disabled-border-color: var(--mm-lila);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--mm-morado); --bs-btn-border-color: var(--mm-morado);
+  --bs-btn-hover-bg: var(--mm-morado); --bs-btn-hover-border-color: var(--mm-morado);
+  --bs-btn-active-bg: var(--mm-morado-oscuro); --bs-btn-active-border-color: var(--mm-morado-oscuro);
+}
+.btn-dark { --bs-btn-bg: var(--mm-negro); --bs-btn-border-color: var(--mm-negro); }
+.text-morado { color: var(--mm-morado) !important; }
+.bg-morado { background: var(--mm-morado) !important; color: #fff; }
+.bg-morado-claro { background: var(--mm-morado-claro) !important; }
+.form-control:focus, .form-select:focus, .form-check-input:focus {
+  border-color: var(--mm-lila); box-shadow: 0 0 0 .2rem rgba(115, 27, 236, .18);
+}
+.form-check-input:checked { background-color: var(--mm-morado); border-color: var(--mm-morado); }
+.page-link { color: var(--mm-morado); }
+.active > .page-link, .page-link.active { background: var(--mm-morado); border-color: var(--mm-morado); }
+
+/* Estados de propiedades: solo morado, negro, blanco y grises */
+.estado { display: inline-block; padding: .2rem .6rem; border-radius: 999px; font-size: .78rem; font-weight: 600; border: 1px solid transparent; }
+.estado-borrador   { background: #f1f0f3; color: #4a4752; }
+.estado-disponible { background: var(--mm-morado); color: #fff; }
+.estado-arrendada  { background: var(--mm-morado-claro); color: var(--mm-morado-oscuro); }
+.estado-vendida    { background: var(--mm-negro); color: #fff; }
+.estado-anulada    { background: #fff; color: var(--mm-gris); border-color: var(--mm-borde); text-decoration: line-through; }
+/* Solicitudes de captación, encargos y agenda (misma paleta) */
+.estado-sol-pendiente, .estado-vencida { background: var(--mm-morado); color: #fff; }
+.estado-sol-aceptada, .estado-vigente  { background: var(--mm-morado-claro); color: var(--mm-morado-oscuro); }
+.estado-sol-rechazada, .estado-vencido { background: #fff; color: var(--mm-gris); border-color: var(--mm-borde); }
+.estado-futuro, .estado-pendiente      { background: #f1f0f3; color: #4a4752; }
+.estado-realizada                       { background: var(--mm-negro); color: #fff; }
+
+/* Mensajes dentro de la paleta corporativa */
+.alert { border-radius: .75rem; border-width: 1px 1px 1px 4px; }
+.alert-success, .alert-info { background: var(--mm-morado-claro); border-color: var(--mm-morado); color: var(--mm-negro); }
+.alert-danger, .alert-warning { background: #fff; border-color: var(--mm-negro); color: var(--mm-negro); font-weight: 500; }
+.invalid-feedback { color: var(--mm-morado-oscuro); font-weight: 500; }
+
+.foto-vacia { background: repeating-linear-gradient(45deg, #f4f1f9, #f4f1f9 10px, #ece6f6 10px, #ece6f6 20px);
+  display: flex; align-items: center; justify-content: center; color: var(--mm-gris); }
+
+/* Campo trampa anti-spam */
+.campo-trampa { position: absolute !important; left: -9999px !important; height: 0; overflow: hidden; }
+/* Etapas de oportunidad */
+.estado-op-nueva       { background: var(--mm-morado); color: #fff; }
+.estado-op-contactado  { background: var(--mm-morado-claro); color: var(--mm-morado-oscuro); }
+.estado-op-visita      { background: var(--mm-morado-claro); color: var(--mm-morado-oscuro); border-color: var(--mm-lila); }
+.estado-op-negociacion { background: var(--mm-morado-oscuro); color: #fff; }
+.estado-op-ganada      { background: var(--mm-negro); color: #fff; }
+.estado-op-perdida     { background: #fff; color: var(--mm-gris); border-color: var(--mm-borde); }
+.estado-of-pendiente      { background: #f1f0f3; color: #4a4752; }
+.estado-of-aceptada       { background: var(--mm-morado); color: #fff; }
+.estado-of-rechazada      { background: #fff; color: var(--mm-gris); border-color: var(--mm-borde); }
+.estado-of-contraofertada { background: var(--mm-morado-claro); color: var(--mm-morado-oscuro); }
