@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+db.sqlite3
+media/
+private_media/
+staticfiles/
+.env
+# pipenv: el lock fija versiones según el Python de quien lo genera (3.10 vs 3.11+);
+# cada estudiante lo genera al ejecutar «pipenv install».
+Pipfile.lock
+# Respaldos locales (python manage.py respaldar)
+respaldos/
