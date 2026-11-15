@@ -1,0 +1,78 @@
+{% extends "portal/base_portal.html" %}
+{% load formato %}
+{% block titulo %}{{ p.titulo }} · {{ EMPRESA.nombre }}{% endblock %}
+{% block contenido %}
+{# Esta plantilla solo recibe el diccionario público "p" (ver propiedades/publico.py). #}
+<div class="container py-4">
+  <a href="{% url 'portal:catalogo' %}" class="small"><i class="bi bi-arrow-left"></i> Volver al catálogo</a>
+  <div class="row g-4 mt-1">
+    <div class="col-lg-8">
+      {% if p.fotos %}
+        <div id="carrusel" class="carousel slide ficha-carrusel">
+          <div class="carousel-inner">
+            {% for f in p.fotos %}
+              <div class="carousel-item {% if forloop.first %}active{% endif %}"><img src="{{ f }}" alt="{{ p.titulo }} — foto {{ forloop.counter }}"></div>
+            {% endfor %}
+          </div>
+          {% if p.fotos|length > 1 %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#carrusel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span><span class="visually-hidden">Anterior</span></button>
+            <button class="carousel-control-next" type="button" data-bs-target="#carrusel" data-bs-slide="next"><span class="carousel-control-next-icon"></span><span class="visually-hidden">Siguiente</span></button>
+          {% endif %}
+        </div>
+        {% if p.fotos|length > 1 %}
+          <div class="ficha-miniaturas">
+            {% for f in p.fotos %}<button type="button" data-bs-target="#carrusel" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}" aria-label="Foto {{ forloop.counter }}"><img src="{{ f }}" alt=""></button>{% endfor %}
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="foto-vacia rounded-4" style="aspect-ratio:16/10"><i class="bi bi-house fs-1"></i></div>
+      {% endif %}
+
+      <div class="mt-4">
+        <span class="badge bg-morado mb-2">{{ p.operacion }}{% if p.modalidad_arriendo %} · {{ p.modalidad_arriendo|lower }}{% endif %}</span>
+        <h1 class="h3">{{ p.titulo }}</h1>
+        <div class="text-secondary"><i class="bi bi-geo-alt"></i> {{ p.comuna }} · Zona {{ p.zona|lower }}{% if p.sector_publico %} · {{ p.sector_publico }}{% endif %}</div>
+      </div>
+
+      <div class="ficha-rasgos my-4">
+        <div><div class="num">{{ p.tipo }}</div><div class="txt">Tipo</div></div>
+        {% if p.dormitorios %}<div><div class="num">{{ p.dormitorios }}</div><div class="txt">Dormitorios</div></div>{% endif %}
+        {% if p.banos %}<div><div class="num">{{ p.banos }}</div><div class="txt">Baños</div></div>{% endif %}
+        {% if p.estacionamientos %}<div><div class="num">{{ p.estacionamientos }}</div><div class="txt">Estacionamientos</div></div>{% endif %}
+        {% if p.superficie_util %}<div><div class="num">{{ p.superficie_util|floatformat:"-2" }} m²</div><div class="txt">Superficie útil</div></div>{% endif %}
+        {% if p.superficie_total %}<div><div class="num">{{ p.superficie_total|floatformat:"-2" }} m²</div><div class="txt">Superficie total</div></div>{% endif %}
+      </div>
+
+      <h2 class="h5">Descripción</h2>
+      <p>{{ p.descripcion|linebreaksbr }}</p>
+      {% if p.caracteristicas %}
+        <h2 class="h5 mt-4">Características</h2>
+        <ul class="row list-unstyled">{% for c in p.caracteristicas|lineas %}<li class="col-sm-6 mb-1"><i class="bi bi-check2 text-morado"></i> {{ c }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% if p.video_url %}<a href="{{ p.video_url }}" target="_blank" rel="noopener nofollow" class="btn btn-outline-primary mt-2"><i class="bi bi-play-btn"></i> Ver video</a>{% endif %}
+    </div>
+
+    <div class="col-lg-4">
+      <div class="panel-consulta">
+        <div class="small text-secondary">{{ p.operacion }}</div>
+        <div class="ficha-precio mb-3">{{ p.precio|precio:p.moneda }}</div>
+        <div class="small text-secondary mb-3">Código {{ p.codigo }}</div>
+        {% include "partials/mensajes.html" %}
+        <h2 class="h6">¿Te interesa? Escríbenos</h2>
+        <form method="post" class="validar" novalidate>
+          {% csrf_token %}
+          {% for e in form.non_field_errors %}<div class="alert alert-danger small">{{ e }}</div>{% endfor %}
+          {% include "partials/campo.html" with field=form.nombre %}
+          {% include "partials/campo.html" with field=form.email %}
+          {% include "partials/campo.html" with field=form.telefono %}
+          {% include "partials/campo.html" with field=form.mensaje %}
+          <div class="campo-trampa" aria-hidden="true">{{ form.sitio_web }}</div>
+          {% for e in form.sitio_web.errors %}<div class="alert alert-danger small">{{ e }}</div>{% endfor %}
+          <button class="btn btn-primary w-100 py-2"><i class="bi bi-send"></i> Enviar consulta</button>
+          <p class="small text-secondary mt-2 mb-0">Usaremos tus datos solo para responder esta consulta.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

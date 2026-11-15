@@ -1,5 +1,11 @@
 from django.urls import path
+from . import views
+
+app_name = "portal"
 
 urlpatterns = [
-    # peschke seba mike aqui van las urls de la app 
+    path("", views.catalogo, name="catalogo"),
+    path("propiedad/<str:codigo>/", views.ficha, name="ficha"),
+    path("ofrecer-mi-propiedad/", views.ofrecer, name="ofrecer"),
+    path("contacto/", views.contacto, name="contacto"),
 ]
