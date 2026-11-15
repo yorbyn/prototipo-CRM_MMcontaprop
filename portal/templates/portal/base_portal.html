@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block css %}<link href="{% static 'css/portal.css' %}" rel="stylesheet">{% endblock %}
+{% block body_clase %}portal{% endblock %}
+{% block cuerpo %}
+<nav class="portal-nav">
+  <div class="container d-flex align-items-center justify-content-between py-2">
+    <a href="{% url 'portal:catalogo' %}"><img src="{% static 'img/logo.png' %}" alt="{{ EMPRESA.nombre }}"></a>
+    <div class="d-flex align-items-center gap-3">
+      <a href="{% url 'portal:catalogo' %}?operacion=venta" class="text-decoration-none text-dark fw-medium d-none d-sm-inline">Venta</a>
+      <a href="{% url 'portal:catalogo' %}?operacion=arriendo" class="text-decoration-none text-dark fw-medium d-none d-sm-inline">Arriendo</a>
+      <a href="{% url 'portal:contacto' %}" class="text-decoration-none text-dark fw-medium d-none d-sm-inline">Contacto</a>
+      <a href="{% url 'portal:ofrecer' %}" class="text-decoration-none text-morado fw-semibold">Ofrecer mi propiedad</a>
+      {% if EMPRESA.telefono %}<a href="tel:{{ EMPRESA.telefono }}" class="btn btn-primary btn-sm"><i class="bi bi-telephone"></i> {{ EMPRESA.telefono }}</a>{% endif %}
+    </div>
+  </div>
+</nav>
+
+{% block contenido %}{% endblock %}
+
+<footer class="portal-footer">
+  <div class="container d-flex flex-wrap justify-content-between gap-3">
+    <div><strong>{{ EMPRESA.nombre }}</strong><br>{{ EMPRESA.lema }}<br><a href="{% url 'portal:ofrecer' %}" class="text-white-50">¿Quieres vender o arrendar? Ofrece tu propiedad</a> · <a href="{% url 'portal:contacto' %}" class="text-white-50">Contacto</a></div>
+    <div class="text-md-end">
+      {% if EMPRESA.email %}<a href="mailto:{{ EMPRESA.email }}" class="text-white-50">{{ EMPRESA.email }}</a><br>{% endif %}
+      <span class="small">© {% now "Y" %} {{ EMPRESA.nombre }}</span>
+    </div>
+  </div>
+</footer>
+{% endblock %}

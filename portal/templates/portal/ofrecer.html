@@ -1,0 +1,62 @@
+{% extends "portal/base_portal.html" %}
+{% block titulo %}Ofrecer mi propiedad · {{ EMPRESA.nombre }}{% endblock %}
+{% block contenido %}
+<section class="hero hero-compacto">
+  <div class="container position-relative" style="z-index:1">
+    <h1>Ofrece tu propiedad</h1>
+    <p class="mb-0">¿Quieres vender o arrendar? Cuéntanos sobre tu inmueble y te contactaremos para evaluarlo. Enviar este formulario no publica nada: primero revisamos tu solicitud contigo.</p>
+  </div>
+</section>
+
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      {% include "partials/mensajes.html" %}
+      <form method="post" enctype="multipart/form-data" class="validar" novalidate>
+        {% csrf_token %}
+        {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+
+        <div class="panel-ofrecer mb-4">
+          <h2 class="h5 mb-3">Tu propiedad</h2>
+          <div class="row">
+            <div class="col-md-4">{% include "partials/campo.html" with field=form.tipo %}</div>
+            <div class="col-md-4">{% include "partials/campo.html" with field=form.operacion %}</div>
+            <div class="col-md-4">{% include "partials/campo.html" with field=form.modalidad_arriendo %}</div>
+            <div class="col-md-4">{% include "partials/campo.html" with field=form.zona %}</div>
+            <div class="col-md-8">{% include "partials/campo.html" with field=form.comuna %}</div>
+            <div class="col-12">{% include "partials/campo.html" with field=form.direccion %}</div>
+            <div class="col-6 col-md-3">{% include "partials/campo.html" with field=form.dormitorios %}</div>
+            <div class="col-6 col-md-3">{% include "partials/campo.html" with field=form.banos %}</div>
+            <div class="col-6 col-md-3">{% include "partials/campo.html" with field=form.superficie_util %}</div>
+            <div class="col-6 col-md-3">{% include "partials/campo.html" with field=form.superficie_total %}</div>
+            <div class="col-md-8">{% include "partials/campo.html" with field=form.precio_esperado %}</div>
+            <div class="col-md-4">{% include "partials/campo.html" with field=form.moneda %}</div>
+            <div class="col-12">{% include "partials/campo.html" with field=form.comentarios %}</div>
+            <div class="col-12">{% include "partials/campo.html" with field=form.fotos %}</div>
+          </div>
+        </div>
+
+        <div class="panel-ofrecer mb-4">
+          <h2 class="h5 mb-1">Tus datos de contacto</h2>
+          <p class="small text-secondary">Indica al menos un correo o un teléfono.</p>
+          <div class="row">
+            <div class="col-md-8">{% include "partials/campo.html" with field=form.nombre %}</div>
+            <div class="col-md-4">{% include "partials/campo.html" with field=form.rut %}</div>
+            <div class="col-md-6">{% include "partials/campo.html" with field=form.email %}</div>
+            <div class="col-md-6">{% include "partials/campo.html" with field=form.telefono %}</div>
+          </div>
+        </div>
+
+        <div class="campo-trampa" aria-hidden="true">{{ form.sitio_web }}</div>
+        {% for e in form.sitio_web.errors %}<div class="alert alert-danger small">{{ e }}</div>{% endfor %}
+
+        <div class="aviso-datos mb-3">
+          <i class="bi bi-shield-lock"></i>
+          <div><strong>Uso de tus datos.</strong> {{ EMPRESA.nombre }} usará la información de este formulario solo para evaluar tu propiedad y contactarte por este motivo. Tus datos personales y la dirección exacta del inmueble no se publican en el portal ni se comparten con terceros.</div>
+        </div>
+        <button class="btn btn-primary btn-lg px-5"><i class="bi bi-send"></i> Enviar mi propiedad</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
