@@ -1,9 +1,3 @@
-# Entorno de DESARROLLO con pipenv (forma recomendada en el curso).
-#   pipenv install            -> crea el entorno e instala todo
-#   pipenv run servidor       -> http://127.0.0.1:8000
-# Mantener sincronizado con requirements.txt (alternativa sin pipenv).
-# No se fija la versión de Python: funciona con 3.10, 3.11, 3.12 y 3.13.
-
 [[source]]
 url = "https://pypi.org/simple"
 verify_ssl = true
@@ -11,10 +5,8 @@ name = "pypi"
 
 [packages]
 django = ">=5.2.19,<5.3"
-# Pillow 13 exige Python 3.11+; con Python 3.10 se instala Pillow 12 automáticamente.
 pillow = ">=11.0,<14"
-
-[dev-packages]
+python-dotenv = "*"
 
 [scripts]
 servidor = "python manage.py runserver"
