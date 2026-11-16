@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
 {% load static %}
-
 {% block titulo %}{% block titulo_crm %}CRM{% endblock %} · {{ EMPRESA.nombre }}{% endblock %}
 {% block css %}<link href="{% static 'css/crm.css' %}" rel="stylesheet"><meta name="robots" content="noindex, nofollow">{% endblock %}
 {% block body_clase %}crm{% endblock %}
@@ -14,6 +12,14 @@
   <div class="etiqueta">Gestión</div>
   <nav class="nav flex-column">
     <a class="nav-link {% if ruta.app_name == 'core' %}activo{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid-1x2"></i> Inicio</a>
+    <a class="nav-link" href="#"><i class="bi bi-calendar-week"></i> Agenda</a>
+    <a class="nav-link" href="#"><i class="bi bi-house-door"></i> Propiedades</a>
+    <a class="nav-link" href="#"><i class="bi bi-person-badge"></i> Propietarios</a>
+    <a class="nav-link" href="#"><i class="bi bi-people"></i> Contactos</a>
+    <a class="nav-link" href="#"><i class="bi bi-briefcase"></i> Oportunidades</a>
+    <a class="nav-link" href="#"><i class="bi bi-bar-chart"></i> Indicadores</a>
+    <a class="nav-link" href="#"><i class="bi bi-inbox"></i> Captación</a>
+    <a class="nav-link" href="#"><i class="bi bi-envelope"></i> Correos</a>
   </nav>
   <div class="etiqueta">Portal</div>
   <nav class="nav flex-column">
