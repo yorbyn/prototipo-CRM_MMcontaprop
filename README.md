@@ -69,10 +69,10 @@ El sistema es un único proyecto Django organizado en nueve aplicaciones. Cada a
 
 | Integrante | GitHub | Rama | Aplicaciones | Responsabilidades |
 |---|---|---|---|---|
-| Yorbyn | [@yorbyn](https://github.com/yorbyn) | `feature/a` | `config`, `core`, `portal` | Configuración inicial, estructura compartida, permisos, login, portal público, README e integración final. |
-| Josué | [@Peschke](https://github.com/Peschke) | `feature/b` | `contactos`, `propiedades`, `documentos` | Contactos, preferencias de búsqueda, propiedades, fotografías y documentos privados. |
-| Sebastián | [@Theluxito](https://github.com/Theluxito) | `feature/c` | `comercial`, `actividades` | Oportunidades, ofertas, operaciones, actividades, agenda e indicadores. |
-| Miguel | *Por confirmar* | `feature/d` | `captacion`, `correo` | Solicitudes de captación, fotografías, encargos, aceptación/rechazo y correo con plantillas e historial. |
+| Yorbyn | [@yorbyn](https://github.com/yorbyn) | `feature/ymollo` | `config`, `core`, `portal` | Configuración inicial, estructura compartida, permisos, login, portal público, README e integración final. |
+| Josué | [@Peschke](https://github.com/Peschke) | `feature/jaraya` | `contactos`, `propiedades`, `documentos` | Contactos, preferencias de búsqueda, propiedades, fotografías y documentos privados. |
+| Sebastián | [@Theluxito](https://github.com/Theluxito) | `feature/sferreira` | `comercial`, `actividades` | Oportunidades, ofertas, operaciones, actividades, agenda e indicadores. |
+| Miguel | [@King-MZ-90(https://github.com/King-MZ-90)] | `feature/mdiaz` | `captacion`, `correo` | Solicitudes de captación, fotografías, encargos, aceptación/rechazo y correo con plantillas e historial. |
 
 ## Estructura del proyecto
 
