@@ -1,0 +1,66 @@
+{% extends "portal/base_portal.html" %}
+{% load formato %}
+{% block titulo %}Propiedades en venta y arriendo · {{ EMPRESA.nombre }}{% endblock %}
+{% block contenido %}
+<section class="hero">
+  <div class="container position-relative" style="z-index:1">
+    <h1 class="mb-2">Encuentra tu próxima propiedad</h1>
+    <p class="mb-0">Casas, departamentos y terrenos en venta y arriendo, con atención personalizada.</p>
+  </div>
+</section>
+
+<div class="container">
+  <form method="get" class="buscador">
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-lg-2"><label class="form-label" for="{{ form.operacion.id_for_label }}">Operación</label>{{ form.operacion }}</div>
+      <div class="col-6 col-lg-2"><label class="form-label" for="{{ form.tipo.id_for_label }}">Tipo</label>{{ form.tipo }}</div>
+      <div class="col-6 col-lg-2"><label class="form-label" for="{{ form.zona.id_for_label }}">Zona</label>{{ form.zona }}</div>
+      <div class="col-6 col-lg-2"><label class="form-label" for="{{ form.dormitorios.id_for_label }}">Dormitorios</label>{{ form.dormitorios }}</div>
+      <div class="col-12 col-lg-3">
+        <label class="form-label">Precio</label>
+        <div class="input-group">
+          {{ form.moneda }}
+          {{ form.precio_min }}{{ form.precio_max }}
+        </div>
+      </div>
+      <div class="col-12 col-lg-1"><button class="btn btn-primary w-100" title="Buscar"><i class="bi bi-search"></i><span class="d-lg-none ms-1">Buscar</span></button></div>
+    </div>
+    {% if form.errors %}<div class="small mt-2 fw-semibold">Revisa los valores de precio ingresados.</div>{% endif %}
+  </form>
+
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+    <h2 class="h5 mb-0">{{ total }} propiedad{{ total|pluralize:"es" }} disponible{{ total|pluralize }}</h2>
+    {% if request.GET %}<a href="{% url 'portal:catalogo' %}" class="small">Quitar filtros</a>{% endif %}
+  </div>
+
+  <div class="row g-4">
+    {% for p in propiedades %}
+      <div class="col-sm-6 col-lg-4">
+        <a href="{% url 'portal:ficha' p.codigo %}" class="text-decoration-none text-reset">
+          <article class="card-prop">
+            <div class="position-relative">
+              {% if p.foto_principal %}<img src="{{ p.foto_principal }}" class="imagen" alt="{{ p.titulo }}" loading="lazy">
+              {% else %}<div class="imagen foto-vacia"><i class="bi bi-house fs-1"></i></div>{% endif %}
+              <span class="etiqueta-op">{{ p.operacion }}{% if p.modalidad_arriendo %} · {{ p.modalidad_arriendo|lower }}{% endif %}</span>
+            </div>
+            <div class="p-3">
+              <div class="precio">{{ p.precio|precio:p.moneda }}</div>
+              <div class="fw-semibold mt-1">{{ p.titulo }}</div>
+              <div class="ubicacion"><i class="bi bi-geo-alt"></i> {{ p.comuna }} · Zona {{ p.zona|lower }}</div>
+              <div class="rasgos">
+                <span>{{ p.tipo }}</span>
+                {% if p.dormitorios %}<span><i class="bi bi-door-closed"></i> {{ p.dormitorios }}</span>{% endif %}
+                {% if p.banos %}<span><i class="bi bi-droplet"></i> {{ p.banos }}</span>{% endif %}
+                {% if p.superficie_total %}<span>{{ p.superficie_total|floatformat:"-2" }} m²</span>{% endif %}
+              </div>
+            </div>
+          </article>
+        </a>
+      </div>
+    {% empty %}
+      <div class="col-12"><div class="text-center text-secondary py-5"><i class="bi bi-search fs-1 d-block mb-2"></i>No encontramos propiedades con esos filtros. Prueba ampliando la búsqueda.</div></div>
+    {% endfor %}
+  </div>
+  {% include "partials/paginacion.html" %}
+</div>
+{% endblock %}
