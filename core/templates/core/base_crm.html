@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block titulo %}{% block titulo_crm %}CRM{% endblock %} · {{ EMPRESA.nombre }}{% endblock %}
+{% block css %}<link href="{% static 'css/crm.css' %}" rel="stylesheet"><meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_clase %}crm{% endblock %}
+{% block cuerpo %}
+{% with ruta=request.resolver_match %}
+<aside class="crm-sidebar">
+  <a href="{% url 'core:dashboard' %}" class="logo-caja" title="Inicio del CRM">
+    <img src="{% static 'img/logo.png' %}" alt="MMCONTAPROP">
+  </a>
+  <div class="etiqueta">Gestión</div>
+  <nav class="nav flex-column">
+    <a class="nav-link {% if ruta.app_name == 'core' %}activo{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid-1x2"></i> Inicio</a>
+  </nav>
+  <div class="etiqueta">Portal</div>
+  <nav class="nav flex-column">
+    <a class="nav-link" href="{% url 'portal:catalogo' %}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Ver portal público</a>
+  </nav>
+</aside>
+{% endwith %}
+<main class="crm-main">
+  {% include "partials/mensajes.html" %}
+  {% block contenido %}{% endblock %}
+</main>
+{% endblock %}
