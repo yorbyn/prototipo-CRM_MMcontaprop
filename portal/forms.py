@@ -6,14 +6,17 @@ from captacion.forms import CAMPOS_SOLICITUD_PUBLICOS, SolicitudBaseForm
 from captacion.models import MAX_FOTOS_SOLICITUD, SolicitudCaptacion
 from core.forms import BootstrapMixin, CampoTrampaMixin
 from core.validators import EXTENSIONES_FOTO, TamanoMaximoValidator, validar_contenido_archivo
-from propiedades.models import Propiedad
+from propiedades.models import Propiedad, TipoPropiedad
 
 
 class BusquedaForm(BootstrapMixin, forms.Form):
     operacion = forms.ChoiceField(required=False, label="Operación",
                                   choices=[("", "Venta o arriendo")] + Propiedad.Operacion.choices)
-    tipo = forms.ChoiceField(required=False, label="Tipo",
-                             choices=[("", "Todos los tipos")] + Propiedad.Tipo.choices)
+
+    # PROPIEDAD
+    tipo = forms.ModelChoiceField(required=False, label="Tipo", empty_label="Todos los tipos",
+                                  queryset=TipoPropiedad.objects.filter(activo=True))
+
     zona = forms.ChoiceField(required=False, label="Zona",
                              choices=[("", "Todas las zonas")] + Propiedad.Zona.choices)
     dormitorios = forms.ChoiceField(required=False, label="Dormitorios",

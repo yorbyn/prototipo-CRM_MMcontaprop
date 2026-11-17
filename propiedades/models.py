@@ -1,24 +1,44 @@
-from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, MinValueValidator
+from django.db import models
 from django.urls import reverse
-# Create your models here.
+from django.utils.text import slugify
 
 from core.models import Auditado
 from core.validators import EXTENSIONES_FOTO, TamanoMaximoValidator, nombre_aleatorio
 
 
-class Propiedad(Auditado):
-    class Tipo(models.TextChoices):
-        CASA = "casa", "Casa"
-        DEPARTAMENTO = "departamento", "Departamento"
-        TERRENO = "terreno", "Terreno"
-        PARCELA = "parcela", "Parcela"
-        OFICINA = "oficina", "Oficina"
-        LOCAL = "local", "Local comercial"
-        BODEGA = "bodega", "Bodega"
+class TipoPropiedad(models.Model):
+    """Catálogo de tipos de inmueble (Casa, Departamento...) que mantiene la administradora.
 
+    La clave se genera sola desde el nombre ("Local comercial" -> "local-comercial") y no
+    cambia aunque después se edite el nombre: es lo que guardan las propiedades.
+    """
+    clave = models.SlugField("clave", max_length=30, primary_key=True, editable=False)
+    nombre = models.CharField("nombre", max_length=50, unique=True)
+    activo = models.BooleanField("activo", default=True,
+                                 help_text="Los tipos inactivos no se ofrecen al crear propiedades ni en el portal.")
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "tipo de propiedad"
+        verbose_name_plural = "tipos de propiedad"
+
+    def __str__(self):
+        return self.nombre
+
+    def save(self, *args, **kwargs):
+        if not self.clave:
+            self.clave = slugify(self.nombre)[:30]
+        super().save(*args, **kwargs)
+
+    @property
+    def en_uso(self):
+        return self.propiedades.exists() or self.preferencias.exists() or self.solicitudes.exists()
+
+
+class Propiedad(Auditado):
     class Operacion(models.TextChoices):
         VENTA = "venta", "Venta"
         ARRIENDO = "arriendo", "Arriendo"
@@ -47,7 +67,8 @@ class Propiedad(Auditado):
     codigo = models.CharField("código", max_length=12, unique=True, null=True, editable=False)
     titulo = models.CharField("título comercial", max_length=120,
                               help_text="Ej.: Casa amplia con patio en sector norte")
-    tipo = models.CharField("tipo de inmueble", max_length=20, choices=Tipo.choices)
+    tipo = models.ForeignKey(TipoPropiedad, on_delete=models.PROTECT, related_name="propiedades",
+                             verbose_name="tipo de inmueble")
     operacion = models.CharField("operación", max_length=10, choices=Operacion.choices)
     modalidad_arriendo = models.CharField("modalidad de arriendo", max_length=12,
                                           choices=ModalidadArriendo.choices, blank=True)
@@ -112,10 +133,13 @@ class Propiedad(Auditado):
         return fotos[0] if fotos else None
 
     def tiene_fotos_de_solicitud(self):
+        """Fotos privadas enviadas por el propietario en la solicitud de captación;
+        pasan a la galería pública al publicar."""
         from captacion.models import fotos_solicitud_pendientes
         return fotos_solicitud_pendientes(self).exists()
 
     def errores_para_publicar(self):
+        """Lista de motivos que impiden pasar la propiedad a 'disponible'."""
         errores = []
         if not self.precio:
             errores.append("Debe registrar un precio antes de publicar.")
@@ -152,6 +176,7 @@ def ruta_foto(instancia, nombre):
 
 
 class FotoPropiedad(models.Model):
+    """Fotografía pública de una propiedad (se sirve desde MEDIA)."""
     propiedad = models.ForeignKey(Propiedad, on_delete=models.CASCADE, related_name="fotos")
     imagen = models.ImageField(
         upload_to=ruta_foto,
@@ -164,4 +189,3 @@ class FotoPropiedad(models.Model):
     class Meta:
         ordering = ["-es_principal", "orden", "id"]
         verbose_name = "fotografía"
-

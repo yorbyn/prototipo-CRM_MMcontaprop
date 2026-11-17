@@ -2,6 +2,7 @@ from django import forms
 
 from core.forms import BootstrapMixin
 from core.validators import normalizar_rut
+from propiedades.models import TipoPropiedad 
 
 from .models import Encargo, SolicitudCaptacion
 
@@ -19,6 +20,9 @@ class SolicitudBaseForm(BootstrapMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["modalidad_arriendo"].choices = [("", "—")] + list(self.fields["modalidad_arriendo"].choices)[1:]
+        actual = self.instance.tipo_id if self.instance.pk else None
+        self.fields["tipo"].queryset = TipoPropiedad.objects.filter(Q(activo=True) | Q(pk=actual))
+        self.fields["tipo"].empty_label = "Elige un tipo"
 
     def clean_rut(self):
         return normalizar_rut(self.cleaned_data.get("rut"))
