@@ -1,5 +1,10 @@
 from django.urls import path
 
+from . import views
+
+app_name = "propiedades"
+
 urlpatterns = [
-    # peschke seba mike aqui van las urls de la app 
+    path("", views.lista_propiedad, name="lista-propiedad"),
+    path("<int:pk>/", views.detalle_propiedad, name="detalle-propiedad"),
 ]

@@ -102,6 +102,9 @@ LOGIN_URL = "core:login"
 LOGIN_REDIRECT_URL = "core:dashboard"
 LOGOUT_REDIRECT_URL = "core:login"
 
+LOGIN_MAX_INTENTOS = 5
+LOGIN_BLOQUEO_SEGUNDOS = 15 * 60
+
 MESSAGE_TAGS = {40: "danger"}
 
 PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"

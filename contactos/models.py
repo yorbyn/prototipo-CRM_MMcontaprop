@@ -63,7 +63,8 @@ class PreferenciaBusqueda(Auditado):
     significan «cualquiera». Se usarán en el cruce de propiedades (etapa 3)."""
     contacto = models.ForeignKey(Contacto, on_delete=models.CASCADE, related_name="preferencias")
     operacion = models.CharField("operación", max_length=10, choices=Propiedad.Operacion.choices)
-    tipo = models.CharField("tipo de inmueble", max_length=20, blank=True, choices=Propiedad.Tipo.choices)
+    tipo = models.ForeignKey("propiedades.TipoPropiedad", on_delete=models.PROTECT, null=True, blank=True,
+                             related_name="preferencias", verbose_name="tipo de inmueble")
     zona = models.CharField(max_length=10, blank=True, choices=Propiedad.Zona.choices)
     moneda = models.CharField(max_length=3, default="CLP", choices=Propiedad.Moneda.choices)
     precio_min = models.DecimalField("precio desde", max_digits=14, decimal_places=2, null=True, blank=True,

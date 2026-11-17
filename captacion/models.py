@@ -32,7 +32,7 @@ from core.validators import (
     validar_contenido_archivo,
     validar_rut,
 )
-from propiedades.models import Propiedad
+from propiedades.models import Propiedad, TipoPropiedad
 
 
 class SolicitudCaptacion(Auditado):
@@ -56,10 +56,18 @@ class SolicitudCaptacion(Auditado):
     telefono = models.CharField("teléfono", max_length=30, blank=True)
 
     # --- Datos del inmueble ---
-    tipo = models.CharField("tipo de inmueble", max_length=20, choices=Propiedad.Tipo.choices)
+
+    # PROPIEDAD
+    tipo = models.ForeignKey(
+    TipoPropiedad,
+    on_delete=models.PROTECT,
+    related_name="solicitudes",
+    verbose_name="tipo de inmueble",)
     operacion = models.CharField("operación", max_length=10, choices=Propiedad.Operacion.choices)
     modalidad_arriendo = models.CharField("modalidad de arriendo", max_length=12, blank=True,
                                           choices=Propiedad.ModalidadArriendo.choices)
+
+    
     zona = models.CharField(max_length=10, choices=Propiedad.Zona.choices)
     comuna = models.CharField(max_length=80)
     direccion = models.CharField("dirección del inmueble", max_length=200,
