@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Ingresar · {{ EMPRESA.nombre }}{% endblock %}
+{% block css %}<link href="{% static 'css/crm.css' %}" rel="stylesheet"><meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_clase %}login{% endblock %}
+{% block cuerpo %}
+<div class="login-caja">
+  <img src="{% static 'img/logo.png' %}" alt="MMCONTAPROP">
+  <div class="login-franja"></div>
+  <h1 class="h5 text-center mb-1">Acceso administrativo</h1>
+  <p class="text-center text-secondary small mb-4">Área privada del CRM</p>
+  {% if bloqueado %}
+    <div class="alert alert-danger small">Demasiados intentos fallidos. Espere 15 minutos e intente nuevamente.</div>
+  {% elif form.non_field_errors %}
+    <div class="alert alert-danger small">{% for e in form.non_field_errors %}{{ e }} {% endfor %}</div>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label" for="id_username">Usuario</label>
+      <input type="text" name="username" id="id_username" class="form-control" autocomplete="username" required autofocus value="{{ form.username.value|default:'' }}">
+    </div>
+    <div class="mb-4">
+      <label class="form-label" for="id_password">Contraseña</label>
+      <input type="password" name="password" id="id_password" class="form-control" autocomplete="current-password" required>
+    </div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn btn-primary w-100 py-2">Ingresar</button>
+  </form>
+  <div class="text-center mt-4"><a href="{% url 'portal:catalogo' %}" class="small text-secondary">← Volver al portal de propiedades</a></div>
+</div>
+{% endblock %}

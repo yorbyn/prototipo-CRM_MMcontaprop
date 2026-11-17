@@ -4,6 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = "django-insecure-^up)h3n^s34ohx_a0mcnor(y_9%0j_38f5ivh97^v*!$20-)**"
@@ -138,3 +139,6 @@ PORTAL_MAX_ENVIOS = 5
 PORTAL_VENTANA_SEGUNDOS = 60 * 60
 PROXIES_CONFIABLES = []
 CSP_ACTIVA = False
+
+LOGIN_MAX_INTENTOS = 5
+LOGIN_BLOQUEO_SEGUNDOS = 15 * 60
