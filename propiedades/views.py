@@ -1,9 +1,12 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.contrib import messages
+
+from actividades.models import Actividad
 
 from .models import Propiedad
-from .forms import FiltroPropiedadesForm
+from .forms import FiltroPropiedadesForm, PropiedadForm
 # Create your views here.
 
 def lista_propiedad(request):
@@ -31,6 +34,30 @@ def lista_propiedad(request):
         "filtros": filtros if request.GET else FiltroPropiedadesForm(),
         "pagina": pagina,
         "total": pagina.paginator.count,
+    })
+
+def crear_propiedad(request):
+    inicial = {}
+    if request.GET.get("propietario"):
+        inicial["propietario"] = request.GET["propietario"]
+    form = PropiedadForm(request.POST or None, initial=inicial)
+    if request.method == "POST" and form.is_valid():
+        propiedad = form.save(commit=False)
+        propiedad.guardar_por(request.user)
+        Actividad.registrar_sistema("Propiedad creada en estado Borrador.", request.user, propiedad=propiedad)
+        messages.success(request, f"Propiedad {propiedad.codigo} creada como borrador. Ahora puedes subir fotografías.")
+        return redirect(propiedad)
+    return render(request, "propiedades/form_propiedad.html", {"form": form, "titulo": "Nueva propiedad"})
+
+def editar_propiedad(request, pk):
+    propiedad = get_object_or_404(Propiedad, pk=pk)
+    form = PropiedadForm(request.POST or None, instance=propiedad)
+    if request.method == "POST" and form.is_valid():
+        form.save(commit=False).guardar_por(request.user)
+        messages.success(request, "Propiedad actualizada.")
+        return redirect(propiedad)
+    return render(request, "propiedades/form_propiedad.html", {
+        "form": form, "titulo": f"Editar {propiedad.codigo}", "propiedad": propiedad,
     })
 
 def detalle_propiedad(request, pk):

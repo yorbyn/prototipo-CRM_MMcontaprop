@@ -6,6 +6,7 @@
   <div><h1>Inventario de propiedades</h1><div class="sub">{{ total }} propiedad{{ total|pluralize:"es" }}</div></div>
 </div>
 
+<a href="{% url 'propiedades:crear-propiedad' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nueva propiedad</a>
 <form method="get" class="filtros">
   <div class="row g-2 align-items-end">
     <div class="col-lg-4">{{ filtros.q }}</div>
