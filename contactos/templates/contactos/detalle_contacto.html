@@ -1,0 +1,75 @@
+{% extends "core/base_crm.html" %}
+{% load formato %}
+{% block titulo_crm %}{{ contacto.nombre }}{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div>
+    <div class="small text-secondary"><a href="{% url 'contactos:lista' %}">Contactos</a> / Ficha</div>
+    <h1>{{ contacto.nombre }}</h1>
+    <div class="mt-1">{% for r in contacto.roles %}<span class="badge bg-morado-claro text-morado me-1">{{ r }}</span>{% endfor %}</div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if contacto.es_propietario %}
+      <a href="{% url 'propiedades:crear' %}?propietario={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-house-add"></i> Nueva propiedad</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Datos de contacto <i class="bi bi-lock text-secondary" title="Información privada"></i></div>
+      <div class="tarjeta-cuerpo">
+        <dl class="row mb-0">
+          <dt class="col-4 text-secondary fw-normal">RUT</dt><dd class="col-8">{{ contacto.rut|rut|default:"—" }}</dd>
+          <dt class="col-4 text-secondary fw-normal">Teléfono</dt><dd class="col-8">{% if contacto.telefono %}<a href="tel:{{ contacto.telefono }}">{{ contacto.telefono }}</a>{% else %}—{% endif %}</dd>
+          <dt class="col-4 text-secondary fw-normal">Correo</dt><dd class="col-8">{% if contacto.email %}<a href="mailto:{{ contacto.email }}">{{ contacto.email }}</a>{% else %}—{% endif %}</dd>
+          {% if contacto.informacion_adicional %}<dt class="col-4 text-secondary fw-normal">Adicional</dt><dd class="col-8">{{ contacto.informacion_adicional|linebreaksbr }}</dd>{% endif %}
+          <dt class="col-4 text-secondary fw-normal">Registrado</dt><dd class="col-8 mb-0">{{ contacto.creado|date:"d-m-Y" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    {% if contacto.es_propietario or propiedades %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Propiedades de las que es dueño/a</div>
+      <table class="table table-crm"><tbody>
+        {% for p in propiedades %}
+          <tr><td><a href="{{ p.get_absolute_url }}" class="fw-semibold">{{ p.codigo }}</a> · {{ p.titulo|truncatechars:40 }}</td>
+              <td class="small">{{ p.get_operacion_display }}</td>
+              <td class="text-end"><span class="estado estado-{{ p.estado }}">{{ p.get_estado_display }}</span></td></tr>
+        {% empty %}<tr><td class="text-secondary">Aún no tiene propiedades registradas.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+
+    {% if arriendos %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Arrienda actualmente</div>
+      <table class="table table-crm"><tbody>
+        {% for p in arriendos %}
+          <tr><td><a href="{{ p.get_absolute_url }}" class="fw-semibold">{{ p.codigo }}</a> · {{ p.titulo|truncatechars:45 }}</td>
+              <td class="text-end"><span class="estado estado-{{ p.estado }}">{{ p.get_estado_display }}</span></td></tr>
+        {% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+
+    {% if contacto.es_interesado or preferencias %}
+    <div class="tarjeta mb-3" id="preferencias"><div class="tarjeta-titulo">Preferencias de búsqueda</div>
+      <div class="tarjeta-cuerpo">
+        {% for pr in preferencias %}
+          <div class="{% if not forloop.last %}border-bottom pb-2 mb-2{% endif %}">
+            <div class="fw-semibold">{{ pr.tipo|default:"Cualquier tipo" }} en {{ pr.get_operacion_display|lower }}</div>
+            <div class="small text-secondary">
+              {% if pr.zona %}Zona {{ pr.get_zona_display|lower }}{% else %}Cualquier zona{% endif %}
+              {% if pr.dormitorios_min %} · {{ pr.dormitorios_min }}+ dormitorio{{ pr.dormitorios_min|pluralize }}{% endif %}
+              {% if pr.tiene_precio %} · {% if pr.precio_min is not None and pr.precio_max is not None %}{{ pr.precio_min|precio:pr.moneda }} a {{ pr.precio_max|precio:pr.moneda }}{% elif pr.precio_min is not None %}desde {{ pr.precio_min|precio:pr.moneda }}{% else %}hasta {{ pr.precio_max|precio:pr.moneda }}{% endif %}{% endif %}
+            </div>
+          </div>
+        {% empty %}<p class="text-secondary small mb-0">Aún no se registra qué busca.</p>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
