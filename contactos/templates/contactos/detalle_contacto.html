@@ -4,7 +4,7 @@
 {% block contenido %}
 <div class="crm-encabezado">
   <div>
-    <div class="small text-secondary"><a href="{% url 'contactos:lista' %}">Contactos</a> / Ficha</div>
+    <div class="small text-secondary"><a href="{% url 'contactos:lista-contacto' %}">Contactos</a> / Ficha</div>
     <h1>{{ contacto.nombre }}</h1>
     <div class="mt-1">{% for r in contacto.roles %}<span class="badge bg-morado-claro text-morado me-1">{{ r }}</span>{% endfor %}</div>
   </div>
@@ -12,6 +12,7 @@
     {% if contacto.es_propietario %}
       <a href="{% url 'propiedades:crear' %}?propietario={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-house-add"></i> Nueva propiedad</a>
     {% endif %}
+        <a href="{% url 'contactos:editar-contacto' contacto.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
   </div>
 </div>
 

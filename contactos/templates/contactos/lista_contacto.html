@@ -7,6 +7,7 @@
     <h1>{% if rol == 'propietario' %}Propietarios{% elif rol == 'arrendatario' %}Arrendatarios{% elif rol == 'interesado' %}Interesados{% else %}Contactos{% endif %}</h1>
     <div class="sub">{{ total }} registro{{ total|pluralize }}</div>
   </div>
+    <a href="{% url 'contactos:crear-contacto' %}{% if rol %}?rol={{ rol }}{% endif %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Nuevo {% if rol %}{{ rol }}{% else %}contacto{% endif %}</a>
 </div>
 
 <form method="get" class="filtros row g-2 align-items-end">
@@ -25,7 +26,7 @@
   </div>
   <div class="col-md-3 d-flex gap-2">
     <button class="btn btn-dark flex-fill"><i class="bi bi-search"></i> Buscar</button>
-    {% if q or rol %}<a href="{% url 'contactos:lista_contacto' %}" class="btn btn-light">Limpiar</a>{% endif %}
+    {% if q or rol %}<a href="{% url 'contactos:lista-contacto' %}" class="btn btn-light">Limpiar</a>{% endif %}
   </div>
 </form>
 
