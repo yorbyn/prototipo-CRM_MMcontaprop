@@ -1,0 +1,22 @@
+
+<div class="item-agenda {% if a.vencida %}vencida{% endif %}">
+  <div class="cuando">
+    <div class="dia">{{ a.fecha|date:"d M" }}</div>
+    <div class="hora">{{ a.fecha|date:"H:i" }}</div>
+  </div>
+  <div class="flex-fill">
+    <div class="fw-semibold"><i class="bi {% if a.tipo == 'visita' %}bi-door-open{% else %}bi-check2-square{% endif %} text-morado"></i> {{ a.get_tipo_display }}{% if a.vencida %} <span class="estado estado-vencida ms-1">Vencida</span>{% endif %}</div>
+    <div class="small">{{ a.descripcion|linebreaksbr }}</div>
+    <div class="small text-secondary">
+      {% if a.propiedad %}<a href="{{ a.propiedad.get_absolute_url }}">{{ a.propiedad.codigo }}</a> · {{ a.propiedad.titulo|truncatechars:35 }}{% endif %}
+      {% if a.propiedad and a.contacto %} · {% endif %}
+      {% if a.contacto %}<a href="{{ a.contacto.get_absolute_url }}">{{ a.contacto }}</a>{% if a.contacto.telefono %} · {{ a.contacto.telefono }}{% endif %}{% endif %}
+    </div>
+  </div>
+  {% if a.en_agenda %}
+  <form method="post" action="{% url 'actividades:completar' a.pk %}">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button class="btn btn-sm btn-dark text-nowrap"><i class="bi bi-check2"></i> Realizada</button>
+  </form>
+  {% endif %}
+</div>
