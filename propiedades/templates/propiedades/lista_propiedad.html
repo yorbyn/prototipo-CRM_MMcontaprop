@@ -6,16 +6,33 @@
   <div><h1>Inventario de propiedades</h1><div class="sub">{{ total }} propiedad{{ total|pluralize:"es" }}</div></div>
 </div>
 
+<form method="get" class="filtros">
+  <div class="row g-2 align-items-end">
+    <div class="col-lg-4">{{ filtros.q }}</div>
+    <div class="col-6 col-lg-2">{{ filtros.estado }}</div>
+    <div class="col-6 col-lg-2">{{ filtros.operacion }}</div>
+    <div class="col-6 col-lg-2">{{ filtros.tipo }}</div>
+    <div class="col-6 col-lg-2">{{ filtros.zona }}</div>
+    <div class="col-4 col-lg-2">{{ filtros.moneda }}</div>
+    <div class="col-4 col-lg-2">{{ filtros.precio_min }}</div>
+    <div class="col-4 col-lg-2">{{ filtros.precio_max }}</div>
+    <div class="col-lg-6 d-flex gap-2 justify-content-lg-end">
+      <button class="btn btn-dark"><i class="bi bi-funnel"></i> Filtrar</button>
+      {% if request.GET %}<a href="{% url 'propiedades:lista-propiedad' %}" class="btn btn-light">Limpiar</a>{% endif %}
+    </div>
+  </div>
+</form>
+
 <div class="tarjeta">
   <div class="table-responsive">
     <table class="table table-crm">
       <thead><tr><th></th><th>Código</th><th>Propiedad</th><th>Operación</th><th>Zona / comuna</th><th class="text-end">Precio</th><th>Propietario</th><th>Estado</th></tr></thead>
       <tbody>
-      {% for p in propiedades %}
+      {% for p in pagina %}
         <tr>
           <td>{% with f=p.foto_principal %}{% if f %}<img src="{{ f.imagen.url }}" class="miniatura" alt="">{% else %}<div class="miniatura foto-vacia"><i class="bi bi-image"></i></div>{% endif %}{% endwith %}</td>
           <td><a href="{{ p.get_absolute_url }}" class="fw-semibold text-nowrap">{{ p.codigo }}</a></td>
-          <td>{{ p.titulo|truncatechars:42 }}<div class="small text-secondary">{{ p.get_tipo_display }}{% if p.dormitorios %} · {{ p.dormitorios }} dorm.{% endif %}</div></td>
+          <td>{{ p.titulo|truncatechars:42 }}<div class="small text-secondary">{{ p.tipo }}{% if p.dormitorios %} · {{ p.dormitorios }} dorm.{% endif %}</div></td>
           <td class="small">{{ p.get_operacion_display }}{% if p.modalidad_arriendo %}<div class="text-secondary">{{ p.get_modalidad_arriendo_display }}</div>{% endif %}</td>
           <td class="small">{{ p.get_zona_display }}<div class="text-secondary">{{ p.comuna }}</div></td>
           <td class="text-end text-nowrap fw-semibold">{{ p.precio|precio:p.moneda }}</td>
@@ -23,10 +40,11 @@
           <td><span class="estado estado-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
         </tr>
       {% empty %}
-        <tr><td colspan="8" class="text-center text-secondary p-4">Todavía no hay propiedades.</td></tr>
+        <tr><td colspan="8" class="text-center text-secondary p-4">No hay propiedades que coincidan con los filtros.</td></tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% include "partials/paginacion.html" %}
 {% endblock %}
