@@ -1,4 +1,10 @@
+"""
+Gestión comercial.
 
+La OPORTUNIDAD es el eje del seguimiento: un negocio en curso entre un
+interesado y una propiedad, que avanza por etapas (nueva, contactado, visita,
+negociación) hasta ganarse o perderse con motivo.
+"""
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -10,7 +16,6 @@ from django.utils import timezone
 from core.models import Auditado
 from propiedades.models import Propiedad
 
-# Create your models here.
 
 class Oportunidad(Auditado):
     class Etapa(models.TextChoices):
@@ -28,8 +33,7 @@ class Oportunidad(Auditado):
         MANUAL = "manual", "Ingreso manual"
 
     ABIERTAS = (Etapa.NUEVA, Etapa.CONTACTADO, Etapa.VISITA, Etapa.NEGOCIACION)
-
-    # acá las etapás que exigen una propiedad definida 
+    # Etapas que exigen una propiedad definida.
     CON_PROPIEDAD = (Etapa.VISITA, Etapa.NEGOCIACION, Etapa.GANADA)
 
     contacto = models.ForeignKey("contactos.Contacto", on_delete=models.PROTECT, related_name="oportunidades",
@@ -69,6 +73,9 @@ class Oportunidad(Auditado):
         if self.propiedad_id and self.propiedad.estado == "anulada":
             raise ValidationError({"propiedad": "No se pueden crear oportunidades sobre una propiedad anulada."})
 
+    # ------------------------------------------------------------------
+    # Cambios de etapa (siempre quedan en el historial)
+    # ------------------------------------------------------------------
 
     def cambiar_etapa(self, nueva, usuario):
         if not self.abierta:
@@ -113,6 +120,9 @@ class Oportunidad(Auditado):
         from actividades.models import Actividad
         Actividad.registrar_sistema(texto, usuario, oportunidad=self)
 
+    # ------------------------------------------------------------------
+    # Entrada desde el portal (consulta en una ficha o página «Contacto»)
+    # ------------------------------------------------------------------
 
     @classmethod
     def desde_portal(cls, *, nombre, email, telefono="", mensaje, propiedad=None, origen=Origen.PORTAL):
@@ -252,7 +262,7 @@ class Operacion(Auditado):
         constraints = [
             models.UniqueConstraint(fields=["propiedad"], condition=models.Q(estado="vigente"),
                                     name="una_operacion_vigente_por_propiedad"),
-            # :V
+            # Si se anula, la oportunidad puede volver a cerrarse con una operación nueva.
             models.UniqueConstraint(fields=["oportunidad"], condition=models.Q(estado="vigente"),
                                     name="una_operacion_vigente_por_oportunidad"),
         ]
