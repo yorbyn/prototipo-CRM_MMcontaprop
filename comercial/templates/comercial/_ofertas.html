@@ -1,0 +1,38 @@
+{% load formato %}
+<div class="tarjeta mb-3" id="ofertas"><div class="tarjeta-titulo">Ofertas y contraofertas</div>
+  {% if ofertas %}
+  <div class="table-responsive"><table class="table table-crm">
+    <thead><tr><th>Fecha</th><th>Parte</th><th class="text-end">Monto</th><th class="text-end">Respuesta</th></tr></thead>
+    <tbody>
+    {% for o in ofertas %}
+      <tr>
+        <td class="small text-nowrap">{{ o.fecha|date:"d-m-Y" }}</td>
+        <td class="small">{{ o.get_tipo_display }}</td>
+        <td class="text-end fw-semibold">{{ o.monto|precio:o.moneda }}</td>
+        <td class="text-end">
+          {% if o.respuesta == "pendiente" and op.abierta %}
+            <form method="post" action="{% url 'comercial:oferta_responder' o.pk %}" class="d-inline-flex gap-1">{% csrf_token %}
+              <button name="respuesta" value="aceptada" class="btn btn-sm btn-dark">Aceptada</button>
+              <button name="respuesta" value="rechazada" class="btn btn-sm btn-light">Rechazada</button>
+            </form>
+          {% else %}<span class="estado estado-of-{{ o.respuesta }}">{{ o.get_respuesta_display }}</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+  <div class="tarjeta-cuerpo">
+    {% if op.abierta and op.propiedad %}
+    <form method="post" action="{% url 'comercial:oferta_registrar' op.pk %}" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <div class="col-md-4">{{ form_oferta.tipo }}</div>
+      <div class="col-6 col-md-3">{{ form_oferta.monto }}</div>
+      <div class="col-6 col-md-2">{{ form_oferta.moneda }}</div>
+      <div class="col-8 col-md-2">{{ form_oferta.fecha }}</div>
+      <div class="col-4 col-md-1"><button class="btn btn-primary w-100" title="Registrar"><i class="bi bi-plus-lg"></i></button></div>
+    </form>
+    <div class="small text-secondary mt-2">Al registrar una oferta, la pendiente de la otra parte queda como «contraofertada» y la oportunidad pasa a negociación.</div>
+    {% elif not ofertas %}<p class="text-secondary small mb-0">{% if op.abierta %}Asigne una propiedad para registrar ofertas.{% else %}Sin ofertas registradas.{% endif %}</p>{% endif %}
+  </div>
+</div>

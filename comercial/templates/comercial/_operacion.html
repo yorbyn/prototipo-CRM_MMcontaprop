@@ -1,0 +1,35 @@
+{% load formato %}
+{% with operacion=op.operacion %}
+{% if operacion %}
+<div class="tarjeta mb-3 {% if operacion.estado == 'vigente' %}borde-morado{% endif %}" id="operacion">
+  <div class="tarjeta-titulo">Operación de {{ operacion.get_tipo_display|lower }}
+    {% if operacion.estado == 'vigente' %}<a href="{% url 'comercial:operacion_editar' operacion.pk %}" class="small fw-normal"><i class="bi bi-pencil"></i> Editar</a>{% else %}<span class="estado estado-anulada">Anulada</span>{% endif %}</div>
+  <div class="tarjeta-cuerpo">
+    <div class="row g-3">
+      <div class="col-sm-4"><div class="small text-secondary">{% if operacion.es_venta %}Precio final{% else %}Canon pactado{% endif %}</div><div class="fs-5 fw-bold">{{ operacion.precio_final|precio:operacion.moneda }}</div></div>
+      <div class="col-sm-4"><div class="small text-secondary">Comisión</div><div class="fs-5 fw-bold">{{ operacion.comision_monto|precio:operacion.comision_moneda }}</div>
+        <div class="small">{% if operacion.comision_pagada %}<span class="estado estado-realizada">Pagada {{ operacion.fecha_pago_comision|date:"d-m-Y" }}</span>{% else %}<span class="estado estado-pendiente">Pago pendiente</span>{% endif %}</div></div>
+      <div class="col-sm-4 small">
+        {% if operacion.es_venta %}
+          <div><span class="text-secondary">Promesa:</span> {{ operacion.fecha_promesa|date:"d-m-Y"|default:"—" }}</div>
+          <div><span class="text-secondary">Escritura:</span> {{ operacion.fecha_escritura|date:"d-m-Y"|default:"—" }}</div>
+        {% else %}
+          <div><span class="text-secondary">Firma del contrato:</span> {{ operacion.fecha_firma_contrato|date:"d-m-Y" }}</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="mt-3">
+      {% include "documentos/_lista.html" with documentos=operacion.documentos.all destino="operacion" objeto=operacion %}
+    </div>
+    {% if operacion.estado == 'anulada' %}<div class="small text-secondary mt-2">Motivo de anulación: {{ operacion.motivo_anulacion }}</div>
+    {% else %}
+    <button class="btn btn-sm btn-link text-reset p-0 mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#anular-op"><i class="bi bi-x-octagon"></i> Anular operación</button>
+    <form method="post" action="{% url 'comercial:operacion_anular' operacion.pk %}" class="collapse mt-2" id="anular-op" data-confirmar="¿Anular la operación? La propiedad volverá a borrador y deberá publicarla de nuevo a mano.">
+      {% csrf_token %}<textarea name="motivo" class="form-control" rows="2" maxlength="500" placeholder="Motivo (ej.: se cayó el crédito)"></textarea>
+      <button class="btn btn-sm btn-outline-dark mt-2">Confirmar anulación</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endwith %}

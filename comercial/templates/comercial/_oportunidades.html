@@ -1,0 +1,15 @@
+{# Oportunidades de una ficha. Requiere: oportunidades; opcional: mostrar ("contacto"|"propiedad"), nueva_param y nueva_id #}
+<div class="tarjeta mb-3" id="oportunidades"><div class="tarjeta-titulo">Oportunidades
+  {% if nueva_param %}<a href="{% url 'comercial:crear' %}?{{ nueva_param }}={{ nueva_id }}" class="small fw-normal"><i class="bi bi-plus-lg"></i> Nueva</a>{% endif %}</div>
+  <table class="table table-crm"><tbody>
+    {% for o in oportunidades %}
+      <tr>
+        <td><a href="{{ o.get_absolute_url }}" class="fw-semibold">#{{ o.pk }}</a>
+          {% if mostrar == "propiedad" %}{% if o.propiedad %}· {{ o.propiedad.codigo }} <span class="small text-secondary">{{ o.propiedad.titulo|truncatechars:30 }}</span>{% else %}<span class="small text-secondary">· sin propiedad</span>{% endif %}
+          {% else %}· {{ o.contacto }}{% endif %}
+          <div class="small text-secondary">{{ o.get_origen_display }} · {{ o.creado|date:"d-m-Y" }}</div></td>
+        <td class="text-end"><span class="estado estado-op-{{ o.etapa }}">{{ o.get_etapa_display }}</span></td>
+      </tr>
+    {% empty %}<tr><td class="text-secondary small">Sin oportunidades.</td></tr>{% endfor %}
+  </tbody></table>
+</div>
