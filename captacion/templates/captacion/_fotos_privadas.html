@@ -1,0 +1,15 @@
+{# Fotos privadas de una solicitud. Requiere: fotos_privadas; opcional: volver ("propiedad") #}
+<div class="galeria-crm mb-2">
+  {% for f in fotos_privadas %}
+    <div class="foto">
+      <a href="{% url 'captacion:foto' f.pk %}" target="_blank" rel="noopener"><img src="{% url 'captacion:foto' f.pk %}" alt="Foto {{ forloop.counter }} del propietario"></a>
+      <div class="acciones">
+        {% if f.copiada_a_id %}<span class="badge bg-morado-claro text-morado me-auto align-self-center">Publicada</span>
+        {% else %}<span class="small text-secondary me-auto align-self-center"><i class="bi bi-lock"></i> Privada</span>
+        <form method="post" action="{% url 'captacion:foto_eliminar' f.pk %}" data-confirmar="¿Eliminar esta foto? No se publicará.">{% csrf_token %}
+          {% if volver %}<input type="hidden" name="volver" value="{{ volver }}">{% endif %}
+          <button class="btn btn-sm btn-light" title="Eliminar"><i class="bi bi-trash"></i></button></form>{% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>

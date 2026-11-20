@@ -1,0 +1,4 @@
+<div class="small">
+  <div class="text-secondary mb-1">Variables disponibles (se reemplazan al enviar):</div>
+  {% for v, d in variables.items %}<div><code>{{ "{" }}{{ v }}{{ "}" }}</code> <span class="text-secondary">{{ d }}</span></div>{% endfor %}
+</div>
