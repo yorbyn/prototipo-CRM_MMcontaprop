@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib import messages
+from core.permisos import crm_requerido
 
 from actividades.models import Actividad
 
@@ -9,6 +10,7 @@ from .models import Propiedad
 from .forms import FiltroPropiedadesForm, PropiedadForm
 # Create your views here.
 
+@crm_requerido
 def lista_propiedad(request):
     filtros = FiltroPropiedadesForm(request.GET or None)
     propiedades = Propiedad.objects.select_related("propietario").prefetch_related("fotos")
@@ -36,6 +38,7 @@ def lista_propiedad(request):
         "total": pagina.paginator.count,
     })
 
+@crm_requerido
 def crear_propiedad(request):
     inicial = {}
     if request.GET.get("propietario"):
@@ -49,6 +52,7 @@ def crear_propiedad(request):
         return redirect(propiedad)
     return render(request, "propiedades/form_propiedad.html", {"form": form, "titulo": "Nueva propiedad"})
 
+@crm_requerido
 def editar_propiedad(request, pk):
     propiedad = get_object_or_404(Propiedad, pk=pk)
     form = PropiedadForm(request.POST or None, instance=propiedad)
@@ -60,6 +64,7 @@ def editar_propiedad(request, pk):
         "form": form, "titulo": f"Editar {propiedad.codigo}", "propiedad": propiedad,
     })
 
+@crm_requerido
 def detalle_propiedad(request, pk):
     propiedad = get_object_or_404(Propiedad, pk=pk)
     return render(request, "propiedades/detalle_propiedad.html", {
