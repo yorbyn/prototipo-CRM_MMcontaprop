@@ -7,6 +7,7 @@ from propiedades.models import Propiedad
 
 from .models import Actividad
 
+
 class ActividadForm(BootstrapMixin, forms.ModelForm):
     """Registro rápido desde la ficha de un contacto o una propiedad."""
 
@@ -23,7 +24,9 @@ class ActividadForm(BootstrapMixin, forms.ModelForm):
 
 
 class ProgramarForm(BootstrapMixin, forms.ModelForm):
-
+    """Programa una visita o una tarea con fecha. Queda pendiente hasta marcarla
+    como realizada. `fijo` ("contacto" o "propiedad") indica la ficha desde la que
+    se programa: esa relación la fija el servidor y no se pide en el formulario."""
 
     class Meta:
         model = Actividad
