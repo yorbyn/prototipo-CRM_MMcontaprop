@@ -4,7 +4,7 @@
 {% block contenido %}
 <div class="crm-encabezado">
   <div>
-    <div class="small text-secondary"><a href="{% url 'propiedades:lista' %}">Propiedades</a> / {{ propiedad.codigo }}</div>
+    <div class="small text-secondary"><a href="{% url 'propiedades:lista-propiedad' %}">Propiedades</a> / {{ propiedad.codigo }}</div>
     <h1>{{ propiedad.titulo }}</h1>
     <div class="mt-1 d-flex gap-2 align-items-center flex-wrap">
       <span class="estado estado-{{ propiedad.estado }}">{{ propiedad.get_estado_display }}</span>
@@ -13,6 +13,7 @@
   </div>
   <div class="d-flex gap-2">
     {% if propiedad.publicada %}<a href="{% url 'portal:ficha' propiedad.codigo %}" target="_blank" rel="noopener" class="btn btn-outline-primary"><i class="bi bi-eye"></i> Ver en el portal</a>{% endif %}
+    <a href="{% url 'propiedades:actualizar-propiedad' propiedad.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
   </div>
 </div>
 
