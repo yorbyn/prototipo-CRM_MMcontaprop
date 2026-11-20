@@ -1,0 +1,17 @@
+{% extends "core/base_crm.html" %}
+{% block titulo_crm %}Plantillas de correo{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><div class="small text-secondary"><a href="{% url 'correo:enviados' %}">Correos</a> / Plantillas</div><h1>Plantillas de correo</h1></div>
+  <a href="{% url 'correo:plantilla_crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nueva plantilla</a>
+</div>
+<div class="row g-3">
+  <div class="col-xl-8"><div class="tarjeta"><table class="table table-crm"><tbody>
+    {% for p in plantillas %}
+      <tr><td><a href="{% url 'correo:plantilla_editar' p.pk %}" class="fw-semibold">{{ p.nombre }}</a><div class="small text-secondary">{{ p.asunto }}</div></td>
+          <td class="small text-secondary text-end"><code>{{ p.clave }}</code></td></tr>
+    {% empty %}<tr><td class="text-secondary">Sin plantillas.</td></tr>{% endfor %}
+  </tbody></table></div></div>
+  <div class="col-xl-4"><div class="tarjeta"><div class="tarjeta-cuerpo">{% include "correo/_variables.html" %}</div></div></div>
+</div>
+{% endblock %}
