@@ -4,8 +4,8 @@ from django.shortcuts import get_object_or_404, render, redirect
 from core.permisos import crm_requerido
 from django.contrib import messages
 
-from .forms import ContactoForm
-from .models import Contacto
+from .forms import ContactoForm, PreferenciaForm
+from .models import Contacto, PreferenciaBusqueda
 
 ROLES = {
     "propietario": "es_propietario",
@@ -38,6 +38,7 @@ def detalle_contacto(request, pk):
         "propiedades": contacto.propiedades.all(),
         "arriendos": contacto.arriendos.all(),
         "preferencias": contacto.preferencias.all(),
+        "form_preferencia": PreferenciaForm(),
     })
 
 @crm_requerido
@@ -64,3 +65,39 @@ def editar_contacto(request, pk):
     return render(request, "contactos/form_contacto.html", {
         "form": form, "titulo": f"Editar: {contacto}", "contacto": contacto,
     })
+
+@crm_requerido
+def crear_preferencia(request, pk):
+    contacto = get_object_or_404(Contacto, pk=pk)
+    if not contacto.es_interesado:
+        messages.error(request, "Las preferencias de búsqueda se registran para contactos con el rol de interesado.")
+        return redirect(contacto)
+    # El contacto se fija en el servidor, nunca desde datos del navegador.
+    form = PreferenciaForm(request.POST, instance=PreferenciaBusqueda(contacto=contacto))
+    if form.is_valid():
+        form.save(commit=False).guardar_por(request.user)
+        messages.success(request, "Preferencia de búsqueda registrada.")
+    else:
+        for errores in form.errors.values():
+            for e in errores:
+                messages.error(request, e)
+    return redirect(contacto.get_absolute_url() + "#preferencias")
+
+@crm_requerido
+def editar_preferencia(request, pk):
+    preferencia = get_object_or_404(PreferenciaBusqueda.objects.select_related("contacto"), pk=pk)
+    contacto = preferencia.contacto
+    form = PreferenciaForm(request.POST or None, instance=preferencia)
+    if request.method == "POST" and form.is_valid():
+        form.save(commit=False).guardar_por(request.user)
+        messages.success(request, "Preferencia actualizada.")
+        return redirect(contacto.get_absolute_url() + "#preferencias")
+    return render(request, "contactos/preferencia_form.html", {"form": form, "contacto": contacto})
+
+@crm_requerido
+def eliminar_preferencia(request, pk):
+    preferencia = get_object_or_404(PreferenciaBusqueda, pk=pk)
+    contacto = preferencia.contacto
+    preferencia.delete()
+    messages.success(request, "Preferencia eliminada.")
+    return redirect(contacto.get_absolute_url() + "#preferencias")

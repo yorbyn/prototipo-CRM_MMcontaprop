@@ -33,7 +33,7 @@ class Contacto(Auditado):
         return self.nombre
 
     def get_absolute_url(self):
-        return reverse("contactos:detalle", args=[self.pk])
+        return reverse("contactos:detalle-contacto", args=[self.pk])
 
     @property
     def roles(self):
