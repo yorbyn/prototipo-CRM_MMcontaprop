@@ -71,7 +71,9 @@
           <div class="alert alert-warning small mt-3 mb-0"><strong>Para publicar falta:</strong><ul class="mb-0 ps-3">{% for e in errores_publicar %}<li>{{ e }}</li>{% endfor %}</ul></div>
         {% endif %}
       </div>
+      {% include "documentos/_lista.html" %}
     </div>
+    
 
     <div class="tarjeta mb-3"><div class="tarjeta-titulo">Datos privados <i class="bi bi-shield-lock text-secondary"></i></div>
       <div class="tarjeta-cuerpo">

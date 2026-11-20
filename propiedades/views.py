@@ -12,6 +12,7 @@ from core.imagenes import limpiar_imagen
 
 from .models import Propiedad, FotoPropiedad, TipoPropiedad
 from .forms import FiltroPropiedadesForm, PropiedadForm, CambioEstadoForm, FotosForm, TipoPropiedadForm
+from documentos.forms import DocumentoForm
 # Create your views here.
 
 @crm_requerido
@@ -76,6 +77,11 @@ def detalle_propiedad(request, pk):
         "form_estado": CambioEstadoForm(initial={"estado": propiedad.estado}),
         "form_fotos": FotosForm(),
         "errores_publicar": propiedad.errores_para_publicar(),
+        
+        "objeto": propiedad,
+        "destino": "propiedad",
+        "documentos": propiedad.documentos.all(),
+        "form_documento": DocumentoForm(),
     })
 
 @crm_requerido
