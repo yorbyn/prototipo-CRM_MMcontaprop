@@ -1,13 +1,17 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Max, Q, Count
+from django.db import transaction
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from core.permisos import crm_requerido
 
 from actividades.models import Actividad
+from captacion.models import publicar_fotos_solicitud
+from core.imagenes import limpiar_imagen
 
-from .models import Propiedad
-from .forms import FiltroPropiedadesForm, PropiedadForm
+from .models import Propiedad, FotoPropiedad, TipoPropiedad
+from .forms import FiltroPropiedadesForm, PropiedadForm, CambioEstadoForm, FotosForm, TipoPropiedadForm
 # Create your views here.
 
 @crm_requerido
@@ -69,4 +73,145 @@ def detalle_propiedad(request, pk):
     propiedad = get_object_or_404(Propiedad, pk=pk)
     return render(request, "propiedades/detalle_propiedad.html", {
         "propiedad": propiedad, "fotos": propiedad.fotos.all(),
+        "form_estado": CambioEstadoForm(initial={"estado": propiedad.estado}),
+        "form_fotos": FotosForm(),
+        "errores_publicar": propiedad.errores_para_publicar(),
     })
+
+@crm_requerido
+def _mostrar_errores(request, form):
+    for errores in form.errors.values():
+        for e in errores:
+            messages.error(request, e)
+
+@crm_requerido
+def cambiar_estado(request, pk):
+    propiedad = get_object_or_404(Propiedad, pk=pk)
+    form = CambioEstadoForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Estado no válido.")
+        return redirect(propiedad)
+    nuevo = form.cleaned_data["estado"]
+    if nuevo == propiedad.estado:
+        return redirect(propiedad)
+    vigente = propiedad.operaciones.filter(estado="vigente").select_related("oportunidad").first()
+    if vigente:
+        messages.error(request, f"La propiedad tiene una operación vigente (oportunidad #{vigente.oportunidad_id}). "
+                                "Para cambiar su estado, anule primero la operación.")
+        return redirect(propiedad)
+    if nuevo == Propiedad.Estado.DISPONIBLE:
+        errores = propiedad.errores_para_publicar()
+        if errores:
+            for e in errores:
+                messages.error(request, e)
+            return redirect(propiedad)
+    anterior = propiedad.get_estado_display()
+    with transaction.atomic():
+        copiadas = 0
+        if nuevo == Propiedad.Estado.DISPONIBLE:
+            # Las fotos privadas de la solicitud pasan a la galería pública recién ahora.
+            copiadas = publicar_fotos_solicitud(propiedad)
+        propiedad.estado = nuevo
+        propiedad.guardar_por(request.user, update_fields=["estado", "actualizado", "modificado_por"])
+    if copiadas:
+        Actividad.registrar_sistema(f"{copiadas} foto(s) enviadas por el propietario pasaron a la galería pública.",
+                                    request.user, propiedad=propiedad)
+    Actividad.registrar_sistema(
+        f"Estado cambiado de «{anterior}» a «{propiedad.get_estado_display()}».",
+        request.user, propiedad=propiedad,
+    )
+    if propiedad.publicada:
+        messages.success(request, "La propiedad ahora está publicada en el portal.")
+    else:
+        messages.success(request, f"Estado actualizado a «{propiedad.get_estado_display()}». "
+                                  "No aparece en el portal público.")
+    return redirect(propiedad)
+
+
+@crm_requerido
+def tipos(request):
+    lista = TipoPropiedad.objects.annotate(n_propiedades=Count("propiedades")).order_by("nombre")
+    return render(request, "propiedades/tipos.html", {"tipos": lista})
+
+
+@crm_requerido
+def tipo_editar(request, clave=None):
+    tipo = get_object_or_404(TipoPropiedad, clave=clave) if clave else None
+    form = TipoPropiedadForm(request.POST or None, instance=tipo)
+    if request.method == "POST" and form.is_valid():
+        tipo = form.save()
+        messages.success(request, f"Tipo «{tipo}» guardado.")
+        return redirect("propiedades:tipos")
+    return render(request, "propiedades/tipo_form.html", {"form": form, "tipo": tipo})
+
+
+@crm_requerido
+def tipo_activar(request, clave):
+    tipo = get_object_or_404(TipoPropiedad, clave=clave)
+    tipo.activo = not tipo.activo
+    tipo.save(update_fields=["activo"])
+    estado = "activado" if tipo.activo else "desactivado: ya no se ofrece en los formularios ni en el portal"
+    messages.success(request, f"Tipo «{tipo}» {estado}.")
+    return redirect("propiedades:tipos")
+
+
+@crm_requerido
+def tipo_eliminar(request, clave):
+    tipo = get_object_or_404(TipoPropiedad, clave=clave)
+    if tipo.en_uso:
+        messages.error(request, f"«{tipo}» está en uso por propiedades, preferencias o solicitudes: "
+                                "no se puede eliminar. Puedes desactivarlo.")
+    else:
+        tipo.delete()
+        messages.success(request, f"Tipo «{tipo}» eliminado.")
+    return redirect("propiedades:tipos")
+
+
+@crm_requerido
+def subir_fotos(request, pk):
+    propiedad = get_object_or_404(Propiedad, pk=pk)
+    form = FotosForm(request.POST, request.FILES)
+    if form.is_valid():
+        siguiente = (propiedad.fotos.aggregate(m=Max("orden"))["m"] or 0) + 1
+        sin_principal = not propiedad.fotos.filter(es_principal=True).exists()
+        with transaction.atomic():
+            for i, imagen in enumerate(form.cleaned_data["imagenes"]):
+                # Se publica una copia sin metadatos (EXIF/GPS) de cada foto.
+                FotoPropiedad.objects.create(
+                    propiedad=propiedad, imagen=limpiar_imagen(imagen), orden=siguiente + i,
+                    es_principal=sin_principal and i == 0,
+                )
+        messages.success(request, f"{len(form.cleaned_data['imagenes'])} fotografía(s) subida(s).")
+    else:
+        _mostrar_errores(request, form)
+    return redirect(propiedad.get_absolute_url() + "#fotos")
+
+
+@crm_requerido
+def foto_principal(request, foto_id):
+    foto = get_object_or_404(FotoPropiedad, pk=foto_id)
+    with transaction.atomic():
+        foto.propiedad.fotos.update(es_principal=False)
+        foto.es_principal = True
+        foto.save(update_fields=["es_principal"])
+    messages.success(request, "Foto principal actualizada.")
+    return redirect(foto.propiedad.get_absolute_url() + "#fotos")
+
+
+@crm_requerido
+def eliminar_foto(request, foto_id):
+    foto = get_object_or_404(FotoPropiedad, pk=foto_id)
+    propiedad = foto.propiedad
+    if propiedad.publicada and propiedad.fotos.count() == 1:
+        messages.error(request, "Una propiedad publicada debe tener al menos una foto. "
+                                "Suba otra antes de eliminar esta o cambie su estado.")
+        return redirect(propiedad.get_absolute_url() + "#fotos")
+    era_principal = foto.es_principal
+    foto.delete()
+    if era_principal:
+        primera = propiedad.fotos.order_by("orden", "id").first()
+        if primera:
+            primera.es_principal = True
+            primera.save(update_fields=["es_principal"])
+    messages.success(request, "Fotografía eliminada.")
+    return redirect(propiedad.get_absolute_url() + "#fotos")

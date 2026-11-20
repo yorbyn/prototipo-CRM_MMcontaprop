@@ -1,9 +1,12 @@
 from django import forms
 from django.db.models import Q
-
+from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from core.forms import BootstrapMixin
+from django.utils.text import slugify
 
 from contactos.models import Contacto
+from core.validators import EXTENSIONES_FOTO, TamanoMaximoValidator
 from .models import Propiedad, TipoPropiedad
 from core.forms import BootstrapMixin
 
@@ -49,3 +52,50 @@ class FiltroPropiedadesForm(BootstrapMixin, forms.Form):
                                     widget=forms.NumberInput(attrs={"placeholder": "Precio mín."}))
     precio_max = forms.DecimalField(required=False, min_value=0, label="Precio máx.",
                                     widget=forms.NumberInput(attrs={"placeholder": "Precio máx."}))
+
+class CambioEstadoForm(BootstrapMixin, forms.Form):
+    estado = forms.ChoiceField(choices=Propiedad.Estado.choices)
+
+
+class MultipleImageInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleImageField(forms.ImageField):
+    """Campo que acepta varias imágenes; cada una se valida con Pillow."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleImageInput(attrs={"accept": ".jpg,.jpeg,.png"}))
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        unico = super().clean
+        if isinstance(data, (list, tuple)) and not data:
+            data = None  # provoca el error "campo obligatorio"
+        if isinstance(data, (list, tuple)):
+            return [unico(d, initial) for d in data]
+        return [unico(data, initial)]
+
+
+class FotosForm(BootstrapMixin, forms.Form):
+    imagenes = MultipleImageField(
+        label="Fotografías (JPG o PNG)",
+        validators=[FileExtensionValidator(EXTENSIONES_FOTO), TamanoMaximoValidator(settings.MAX_FOTO_MB)],
+    )
+
+class TipoPropiedadForm(BootstrapMixin, forms.ModelForm):
+    class Meta:
+        model = TipoPropiedad
+        fields = ["nombre", "activo"]
+
+    def clean_nombre(self):
+        nombre = " ".join(self.cleaned_data["nombre"].split())
+        # Sin duplicados aunque cambien mayúsculas ("casa" y "Casa") ni la clave que se genera.
+        otros = TipoPropiedad.objects.exclude(pk=self.instance.pk)
+        if otros.filter(nombre__iexact=nombre).exists():
+            raise forms.ValidationError("Ya existe un tipo con ese nombre.")
+        if not self.instance.pk and otros.filter(clave=slugify(nombre)[:30]).exists():
+            raise forms.ValidationError("Ya existe un tipo con un nombre equivalente.")
+        if not slugify(nombre):
+            raise forms.ValidationError("Escribe un nombre con letras o números.")
+        return nombre

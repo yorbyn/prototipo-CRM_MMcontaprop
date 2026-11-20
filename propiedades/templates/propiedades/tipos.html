@@ -1,0 +1,36 @@
+{% extends "core/base_crm.html" %}
+{% block titulo_crm %}Tipos de propiedad{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><h1>Tipos de propiedad</h1><div class="sub">Los tipos activos se ofrecen al crear propiedades, en las preferencias, en captación y en el portal.</div></div>
+  <a href="{% url 'propiedades:tipo_crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nuevo tipo</a>
+</div>
+
+<div class="tarjeta">
+  <div class="table-responsive">
+    <table class="table table-crm">
+      <thead><tr><th>Nombre</th><th class="text-end">Propiedades</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+      {% for t in tipos %}
+        <tr>
+          <td class="fw-semibold">{{ t.nombre }}</td>
+          <td class="text-end">{{ t.n_propiedades }}</td>
+          <td>{% if t.activo %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
+          <td class="text-end text-nowrap">
+            <a href="{% url 'propiedades:tipo_editar' t.clave %}" class="btn btn-sm btn-light" title="Editar"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{% url 'propiedades:tipo_activar' t.clave %}" class="d-inline">{% csrf_token %}
+              <button class="btn btn-sm btn-light" title="{% if t.activo %}Desactivar{% else %}Activar{% endif %}"><i class="bi {% if t.activo %}bi-eye-slash{% else %}bi-eye{% endif %}"></i></button>
+            </form>
+            <form method="post" action="{% url 'propiedades:tipo_eliminar' t.clave %}" class="d-inline" data-confirmar="¿Eliminar el tipo «{{ t.nombre }}»?">{% csrf_token %}
+              <button class="btn btn-sm btn-light" title="Eliminar"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-center text-secondary p-4">Todavía no hay tipos.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
