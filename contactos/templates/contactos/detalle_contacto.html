@@ -56,18 +56,36 @@
     {% endif %}
 
     {% if contacto.es_interesado or preferencias %}
-    <div class="tarjeta mb-3" id="preferencias"><div class="tarjeta-titulo">Preferencias de búsqueda</div>
+    <div class="tarjeta mb-3" id="preferencias"><div class="tarjeta-titulo">Preferencias de búsqueda
+      {% if contacto.es_interesado %}<button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#nueva-preferencia"><i class="bi bi-plus-lg"></i> Agregar</button>{% endif %}</div>
       <div class="tarjeta-cuerpo">
         {% for pr in preferencias %}
-          <div class="{% if not forloop.last %}border-bottom pb-2 mb-2{% endif %}">
-            <div class="fw-semibold">{{ pr.tipo|default:"Cualquier tipo" }} en {{ pr.get_operacion_display|lower }}</div>
-            <div class="small text-secondary">
-              {% if pr.zona %}Zona {{ pr.get_zona_display|lower }}{% else %}Cualquier zona{% endif %}
-              {% if pr.dormitorios_min %} · {{ pr.dormitorios_min }}+ dormitorio{{ pr.dormitorios_min|pluralize }}{% endif %}
-              {% if pr.tiene_precio %} · {% if pr.precio_min is not None and pr.precio_max is not None %}{{ pr.precio_min|precio:pr.moneda }} a {{ pr.precio_max|precio:pr.moneda }}{% elif pr.precio_min is not None %}desde {{ pr.precio_min|precio:pr.moneda }}{% else %}hasta {{ pr.precio_max|precio:pr.moneda }}{% endif %}{% endif %}
+          <div class="d-flex justify-content-between align-items-start gap-2 {% if not forloop.last %}border-bottom pb-2 mb-2{% endif %}">
+            <div>
+              <div class="fw-semibold">{{ pr.tipo|default:"Cualquier tipo" }} en {{ pr.get_operacion_display|lower }}</div>
+              <div class="small text-secondary">
+                {% if pr.zona %}Zona {{ pr.get_zona_display|lower }}{% else %}Cualquier zona{% endif %}
+                {% if pr.dormitorios_min %} · {{ pr.dormitorios_min }}+ dormitorio{{ pr.dormitorios_min|pluralize }}{% endif %}
+                {% if pr.tiene_precio %} · {% if pr.precio_min is not None and pr.precio_max is not None %}{{ pr.precio_min|precio:pr.moneda }} a {{ pr.precio_max|precio:pr.moneda }}{% elif pr.precio_min is not None %}desde {{ pr.precio_min|precio:pr.moneda }}{% else %}hasta {{ pr.precio_max|precio:pr.moneda }}{% endif %}{% endif %}
+              </div>
+            </div>
+            <div class="d-flex gap-1">
+              <a href="{% url 'contactos:editar-preferencia' pr.pk %}" class="btn btn-sm btn-light" title="Editar"><i class="bi bi-pencil"></i></a>
+              <form method="post" action="{% url 'contactos:eliminar-preferencia' pr.pk %}" data-confirmar="¿Eliminar esta preferencia de búsqueda?">{% csrf_token %}
+                <button class="btn btn-sm btn-light" title="Eliminar"><i class="bi bi-trash"></i></button></form>
             </div>
           </div>
-        {% empty %}<p class="text-secondary small mb-0">Aún no se registra qué busca.</p>{% endfor %}
+        {% empty %}<p class="text-secondary small mb-0">Aún no se registra qué busca. Agregue una o más preferencias (operación, tipo, zona, precio, dormitorios).</p>{% endfor %}
+        {% if contacto.es_interesado %}
+        <div class="collapse mt-3" id="nueva-preferencia">
+          <form method="post" action="{% url 'contactos:crear-preferencia' contacto.pk %}" class="p-3 rounded-3 bg-morado-claro">
+            {% csrf_token %}
+            {% with form=form_preferencia %}{% include "contactos/preferencia_campo.html" %}{% endwith %}
+            <button class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> Guardar preferencia</button>
+            <span class="small text-secondary ms-2">Campos vacíos = cualquiera.</span>
+          </form>
+        </div>
+        {% endif %}
       </div>
     </div>
     {% endif %}
