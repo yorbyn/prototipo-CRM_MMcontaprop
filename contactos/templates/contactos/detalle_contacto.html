@@ -12,7 +12,10 @@
     {% if contacto.es_propietario %}
       <a href="{% url 'propiedades:crear-propiedad' %}?propietario={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-house-add"></i> Nueva propiedad</a>
     {% endif %}
-        <a href="{% url 'contactos:editar-contacto' contacto.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
+    {% if contacto.email %}
+      <a href="{% url 'correo:redactar' %}?contacto={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-envelope"></i> Enviar correo</a>
+    {% endif %}
+    <a href="{% url 'contactos:editar-contacto' contacto.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
   </div>
 </div>
 
@@ -29,7 +32,7 @@
         </dl>
       </div>
     </div>
-        {% include "documentos/lista.html" %}
+    {% include "documentos/lista.html" %}
   </div>
 
   <div class="col-lg-7">
@@ -90,6 +93,35 @@
       </div>
     </div>
     {% endif %}
+
+    {% if contacto.es_interesado or oportunidades %}
+      {% include "comercial/_oportunidades.html" with mostrar="propiedad" nueva_param="contacto" nueva_id=contacto.pk %}
+    {% endif %}
+
+    {% if calces %}
+    <div class="tarjeta mb-3" id="cruce"><div class="tarjeta-titulo">Propiedades que calzan con sus preferencias <span class="small fw-normal text-secondary">{{ calces|length }}</span></div>
+      <table class="table table-crm"><tbody>
+        {% for c in calces %}
+          <tr>
+            <td><a href="{{ c.propiedad.get_absolute_url }}" class="fw-semibold">{{ c.propiedad.codigo }}</a> · {{ c.propiedad.titulo|truncatechars:35 }}
+              <div class="small text-secondary">{{ c.propiedad.comuna }} · {{ c.propiedad.precio|precio:c.propiedad.moneda }}</div></td>
+            <td class="text-end">
+              {% if c.oportunidad %}<a href="{{ c.oportunidad.get_absolute_url }}" class="small">Oportunidad #{{ c.oportunidad.pk }}</a>
+              {% else %}
+              <form method="post" action="{% url 'comercial:crear_desde_cruce' %}">{% csrf_token %}
+                <input type="hidden" name="contacto" value="{{ contacto.pk }}">
+                <input type="hidden" name="propiedad" value="{{ c.propiedad.pk }}">
+                <button class="btn btn-sm btn-outline-primary text-nowrap"><i class="bi bi-plus-lg"></i> Oportunidad</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+
+    {% include "actividades/_historial.html" %}
   </div>
 </div>
 {% endblock %}
