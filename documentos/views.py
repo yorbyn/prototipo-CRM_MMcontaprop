@@ -52,6 +52,7 @@ def descargar(request, pk):
 def eliminar(request, pk):
     doc = get_object_or_404(Documento, pk=pk)
     destino = doc.duenio
-    doc.delete()
+    doc.archivo.delete(save=False)  # borra el archivo del disco
+    doc.delete()                    # borra el registro de la base de datos
     messages.success(request, "Documento eliminado.")
     return redirect(destino.get_absolute_url() + "#documentos") if destino else redirect("core:dashboard")

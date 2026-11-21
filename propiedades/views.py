@@ -151,7 +151,6 @@ def tipos(request):
 
 
 @crm_requerido
-@require_POST
 def tipo_editar(request, clave=None):
     tipo = get_object_or_404(TipoPropiedad, clave=clave) if clave else None
     form = TipoPropiedadForm(request.POST or None, instance=tipo)
@@ -229,7 +228,8 @@ def eliminar_foto(request, foto_id):
                                 "Suba otra antes de eliminar esta o cambie su estado.")
         return redirect(propiedad.get_absolute_url() + "#fotos")
     era_principal = foto.es_principal
-    foto.delete()
+    foto.imagen.delete(save=False)  # borra el archivo del disco
+    foto.delete()                   # borra el registro de la base de datos
     if era_principal:
         primera = propiedad.fotos.order_by("orden", "id").first()
         if primera:
