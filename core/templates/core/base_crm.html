@@ -13,16 +13,15 @@
   <nav class="nav flex-column">
     <a class="nav-link {% if ruta.app_name == 'core' %}activo{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid-1x2"></i> Inicio</a>
 
-    <a class="nav-link" href="#"><i class="bi bi-calendar-week"></i> Agenda</a>
-    <a class="nav-link" {% if ruta.app_name == 'propiedades' %}activo{% endif %} href="{% url 'propiedades:lista-propiedad' %}"><i class="bi bi-house-door"></i> Propiedades</a>
+    <a class="nav-link {% if ruta.app_name == 'actividades' %}activo{% endif %}" href="{% url 'actividades:agenda' %}"><i class="bi bi-calendar-week"></i> Agenda</a>
+    <a class="nav-link {% if ruta.app_name == 'propiedades' and 'tipo' not in ruta.url_name %}activo{% endif %}" href="{% url 'propiedades:lista-propiedad' %}"><i class="bi bi-house-door"></i> Propiedades</a>
     <a class="nav-link {% if ruta.app_name == 'propiedades' and 'tipo' in ruta.url_name %}activo{% endif %}" href="{% url 'propiedades:tipos' %}"><i class="bi bi-tags"></i> Tipos de propiedad</a>
     <a class="nav-link {% if ruta.app_name == 'contactos' and request.GET.rol == 'propietario' %}activo{% endif %}" href="{% url 'contactos:lista-contacto' %}?rol=propietario"><i class="bi bi-person-badge"></i> Propietarios</a>
     <a class="nav-link {% if ruta.app_name == 'contactos' and request.GET.rol != 'propietario' %}activo{% endif %}" href="{% url 'contactos:lista-contacto' %}"><i class="bi bi-people"></i> Contactos</a>
-    <a class="nav-link" href="#"><i class="bi bi-briefcase"></i> Oportunidades</a>
-    <a class="nav-link" href="#"><i class="bi bi-bar-chart"></i> Indicadores</a>
-    <a class="nav-link" href="#"><i class="bi bi-inbox"></i> Captación</a>
-    <a class="nav-link" href="#"><i class="bi bi-envelope"></i> Correos</a>
-    
+    <a class="nav-link {% if ruta.app_name == 'comercial' and ruta.url_name != 'indicadores' %}activo{% endif %}" href="{% url 'comercial:lista' %}"><i class="bi bi-briefcase"></i> Oportunidades</a>
+    <a class="nav-link {% if ruta.app_name == 'comercial' and ruta.url_name == 'indicadores' %}activo{% endif %}" href="{% url 'comercial:indicadores' %}"><i class="bi bi-bar-chart"></i> Indicadores</a>
+    <a class="nav-link {% if ruta.app_name == 'captacion' %}activo{% endif %}" href="{% url 'captacion:lista' %}"><i class="bi bi-inbox"></i> Captación</a>
+    <a class="nav-link {% if ruta.app_name == 'correo' %}activo{% endif %}" href="{% url 'correo:enviados' %}"><i class="bi bi-envelope"></i> Correos</a>
   </nav>
   <div class="etiqueta">Portal</div>
   <nav class="nav flex-column">
@@ -32,7 +31,7 @@
     <div class="mb-2"><i class="bi bi-person-circle me-1"></i> {{user.get_full_name|default:user.username }}</div>
       <form method="post" action="{% url 'core:logout' %}">
       {% csrf_token %}
-        <button class="btn btn-sm btn-outline-light w-100"><i class="bi bi-boxarrow-right me-1"></i> Cerrar sesión</button>
+        <button class="btn btn-sm btn-outline-light w-100"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</button>
       </form>
     </div>
 </aside>

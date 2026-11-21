@@ -5,7 +5,7 @@
 <div class="crm-encabezado">
   <div>
     <div class="small text-secondary"><a href="{% url 'captacion:lista' %}">Captación</a> / Solicitud #{{ solicitud.pk }}</div>
-    <h1>{{ solicitud.get_tipo_display }} en {{ solicitud.comuna }}</h1>
+    <h1>{{ solicitud.tipo }} en {{ solicitud.comuna }}</h1>
     <div class="mt-1 d-flex gap-2 align-items-center flex-wrap">
       <span class="estado estado-sol-{{ solicitud.estado }}">{{ solicitud.get_estado_display }}</span>
       <span class="small text-secondary">{{ solicitud.get_origen_display }} · Recibida {{ solicitud.creado|date:"d-m-Y H:i" }}{% if not solicitud.pendiente and solicitud.modificado_por %} · Evaluada por {{ solicitud.modificado_por.get_full_name|default:solicitud.modificado_por.username }} el {{ solicitud.actualizado|date:"d-m-Y" }}{% endif %}</span>

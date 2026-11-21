@@ -23,7 +23,7 @@ def ficha_publica(p):
     return {
         "codigo": p.codigo,
         "titulo": p.titulo,
-        "tipo": p.get_tipo_display(),
+        "tipo": p.tipo.nombre,
         "operacion": p.get_operacion_display(),
         "es_arriendo": p.operacion == Propiedad.Operacion.ARRIENDO,
         "modalidad_arriendo": p.get_modalidad_arriendo_display() if p.modalidad_arriendo else "",
