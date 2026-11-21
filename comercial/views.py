@@ -87,6 +87,9 @@ def detalle(request, pk):
     contexto = {
         "op": op,
         "objeto": op, "destino": "oportunidad",
+        # Pasos del embudo que se muestran en la ficha (la pérdida se muestra aparte).
+        "pasos": [Oportunidad.Etapa.NUEVA, Oportunidad.Etapa.CONTACTADO, Oportunidad.Etapa.VISITA,
+                  Oportunidad.Etapa.NEGOCIACION, Oportunidad.Etapa.GANADA],
         "actividades": op.actividades.select_related("contacto", "propiedad")[:80],
         "form_actividad": ActividadForm(),
         "form_programar": ProgramarForm(fijo="oportunidad"),

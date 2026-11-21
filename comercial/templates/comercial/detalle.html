@@ -1,0 +1,105 @@
+{% extends "core/base_crm.html" %}
+{% load formato %}
+{% block titulo_crm %}Oportunidad #{{ op.pk }}{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div>
+    <div class="small text-secondary"><a href="{% url 'comercial:lista' %}">Oportunidades</a> / #{{ op.pk }}</div>
+    <h1>{{ op.contacto }}{% if op.propiedad %} · {{ op.propiedad.codigo }}{% endif %}</h1>
+    <div class="mt-1 d-flex gap-2 align-items-center flex-wrap">
+      <span class="estado estado-op-{{ op.etapa }}">{{ op.get_etapa_display }}</span>
+      <span class="small text-secondary">{{ op.get_origen_display }} · Creada {{ op.creado|date:"d-m-Y H:i" }}{% if op.cerrada_en %} · Cerrada {{ op.cerrada_en|date:"d-m-Y" }}{% endif %}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if op.contacto.email %}<a href="{% url 'correo:redactar' %}?oportunidad={{ op.pk }}" class="btn btn-outline-primary"><i class="bi bi-envelope"></i> Enviar correo</a>{% endif %}
+    {% if op.abierta and op.propiedad %}<a href="{% url 'comercial:cerrar' op.pk %}" class="btn btn-primary"><i class="bi bi-trophy"></i> Registrar cierre</a>{% endif %}
+  </div>
+</div>
+
+<div class="embudo-pasos mb-3">
+  {% for paso in pasos %}<div class="paso {% if op.etapa == paso.value %}actual{% endif %}">{{ paso.label }}</div>{% endfor %}
+</div>
+{% if op.etapa == 'perdida' %}<div class="alert alert-warning small"><strong>Oportunidad perdida.</strong> Motivo: {{ op.motivo_perdida }}</div>{% endif %}
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    {% if op.mensaje %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Mensaje inicial</div>
+      <div class="tarjeta-cuerpo">{{ op.mensaje|linebreaksbr }}</div></div>
+    {% endif %}
+    {% include "comercial/_operacion.html" %}
+    {% include "comercial/_ofertas.html" %}
+    {% include "actividades/_historial.html" %}
+  </div>
+
+  <div class="col-xl-4">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Interesado <i class="bi bi-lock text-secondary" title="Información privada"></i></div>
+      <div class="tarjeta-cuerpo">
+        <a href="{{ op.contacto.get_absolute_url }}" class="fw-semibold">{{ op.contacto }}</a>
+        <div class="small">{% if op.contacto.telefono %}<a href="tel:{{ op.contacto.telefono }}">{{ op.contacto.telefono }}</a>{% endif %}{% if op.contacto.telefono and op.contacto.email %} · {% endif %}{% if op.contacto.email %}<a href="mailto:{{ op.contacto.email }}">{{ op.contacto.email }}</a>{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Propiedad</div>
+      <div class="tarjeta-cuerpo">
+        {% if op.propiedad %}
+          <a href="{{ op.propiedad.get_absolute_url }}" class="fw-semibold">{{ op.propiedad.codigo }}</a> · {{ op.propiedad.titulo|truncatechars:40 }}
+          <div class="small text-secondary mb-1">{{ op.propiedad.get_operacion_display }} · {{ op.propiedad.precio|precio:op.propiedad.moneda }}</div>
+          <span class="estado estado-{{ op.propiedad.estado }}">{{ op.propiedad.get_estado_display }}</span>
+          <div class="small text-secondary mt-2">Propietario: {{ op.propiedad.propietario }}</div>
+        {% else %}
+          <p class="text-secondary small">El interesado aún no tiene una propiedad asignada.</p>
+        {% endif %}
+        {% if op.abierta %}
+        <form method="post" action="{% url 'comercial:asignar_propiedad' op.pk %}" class="d-flex gap-2 mt-3">
+          {% csrf_token %}
+          {{ form_propiedad.propiedad }}
+          <button class="btn btn-dark text-nowrap">{% if op.propiedad %}Cambiar{% else %}Asignar{% endif %}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if op.abierta %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Seguimiento</div>
+      <div class="tarjeta-cuerpo">
+        <form method="post" action="{% url 'comercial:cambiar_etapa' op.pk %}" class="d-flex gap-2">
+          {% csrf_token %}
+          {{ form_etapa.etapa }}
+          <button class="btn btn-dark">Cambiar</button>
+        </form>
+        <p class="small text-secondary mt-2">Para ganarla use «Registrar cierre».</p>
+        <button class="btn btn-sm btn-link text-reset p-0" type="button" data-bs-toggle="collapse" data-bs-target="#perder-op"><i class="bi bi-x-circle"></i> Marcar como perdida</button>
+        <form method="post" action="{% url 'comercial:perder' op.pk %}" class="collapse mt-2" id="perder-op" data-confirmar="¿Marcar la oportunidad como perdida?">
+          {% csrf_token %}
+          {{ form_perdida.motivo }}
+          <button class="btn btn-sm btn-outline-dark mt-2">Confirmar pérdida</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if otras_abiertas %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Otras oportunidades abiertas por esta propiedad</div>
+      <table class="table table-crm"><tbody>
+        {% for o in otras_abiertas %}
+          <tr><td><a href="{{ o.get_absolute_url }}" class="fw-semibold">#{{ o.pk }}</a> · {{ o.contacto }}</td>
+              <td class="text-end"><span class="estado estado-op-{{ o.etapa }}">{{ o.get_etapa_display }}</span></td></tr>
+        {% endfor %}
+      </tbody></table>
+      {% with operacion=op.operacion %}
+      {% if operacion and operacion.estado == 'vigente' %}
+      <div class="tarjeta-cuerpo">
+        <form method="post" action="{% url 'comercial:cerrar_otras' operacion.pk %}" data-confirmar="¿Cerrar como perdidas las demás oportunidades de esta propiedad?">
+          {% csrf_token %}<input type="hidden" name="confirmar" value="si">
+          <button class="btn btn-sm btn-outline-dark w-100">Cerrar las demás como perdidas</button>
+        </form>
+      </div>
+      {% endif %}
+      {% endwith %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

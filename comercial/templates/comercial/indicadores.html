@@ -1,0 +1,88 @@
+{% extends "core/base_crm.html" %}
+{% load formato %}
+{% block titulo_crm %}Indicadores{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><h1>Indicadores</h1><div class="sub">Del {{ desde|date:"d-m-Y" }} al {{ hasta|date:"d-m-Y" }}. Los montos se suman por moneda (CLP y UF por separado).</div></div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'comercial:exportar' 'oportunidades' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-download"></i> Oportunidades CSV</a>
+    <a href="{% url 'comercial:exportar' 'operaciones' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-download"></i> Operaciones CSV</a>
+    <a href="{% url 'comercial:exportar' 'propiedades' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-download"></i> Propiedades CSV</a>
+  </div>
+</div>
+
+<form method="get" class="filtros row g-2 align-items-end">
+  <div class="col-6 col-md-3"><label class="form-label small text-secondary mb-1" for="{{ form.desde.id_for_label }}">Desde</label>{{ form.desde }}</div>
+  <div class="col-6 col-md-3"><label class="form-label small text-secondary mb-1" for="{{ form.hasta.id_for_label }}">Hasta</label>{{ form.hasta }}</div>
+  <div class="col-md-3"><button class="btn btn-dark w-100"><i class="bi bi-funnel"></i> Ver período</button></div>
+  {% if form.non_field_errors %}<div class="col-12 small fw-semibold">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+</form>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="kpi destacado"><div class="valor">{{ i.total_ops }}</div><div class="nombre">Oportunidades nuevas</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi"><div class="valor">{% if i.conversion is not None %}{{ i.conversion }} %{% else %}—{% endif %}</div><div class="nombre">Conversión ({{ i.ganadas }} ganadas / {{ i.perdidas_cerradas }} perdidas)</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi"><div class="valor">{{ i.n_ventas }} / {{ i.n_arriendos }}</div><div class="nombre">Ventas / arriendos cerrados</div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi"><div class="valor">{{ i.captaciones.total }}</div><div class="nombre">Solicitudes de captación</div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-7">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Embudo de oportunidades <span class="small fw-normal text-secondary">creadas en el período</span></div>
+      <div class="tarjeta-cuerpo">
+        {% for e in i.embudo %}
+          <div class="fila-embudo">
+            <div class="nombre">{{ e.etapa }}</div>
+            <div class="pista"><div class="barra" style="width: {{ e.pct }}%"></div></div>
+            <div class="valor">{{ e.alcanzo }}</div>
+          </div>
+        {% endfor %}
+        <p class="small text-secondary mt-2 mb-0">Cada fila cuenta las oportunidades que llegaron a esa etapa o más allá. Perdidas en el período: {{ i.perdidas }}.</p>
+      </div>
+    </div>
+
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Comisiones <span class="small fw-normal text-secondary">operaciones vigentes registradas en el período</span></div>
+      {% if i.comisiones %}
+      <table class="table table-crm">
+        <thead><tr><th>Moneda</th><th class="text-end">Total</th><th class="text-end">Pagada</th><th class="text-end">Pendiente</th></tr></thead>
+        <tbody>
+        {% for c in i.comisiones %}
+          <tr><td>{{ c.moneda }}</td><td class="text-end fw-semibold">{{ c.total|precio:c.moneda }}</td>
+              <td class="text-end">{{ c.pagada|precio:c.moneda }}</td><td class="text-end">{{ c.pendiente|precio:c.moneda }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<div class="tarjeta-cuerpo"><p class="text-secondary small mb-0">Sin operaciones en el período.</p></div>{% endif %}
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Días en mercado</div>
+      <div class="tarjeta-cuerpo row g-3">
+        <div class="col-6"><div class="cifra">{{ i.dias_cierre|default_if_none:"—" }}</div><div class="small text-secondary">Promedio hasta el cierre ({{ i.n_dias_cierre }} operación{{ i.n_dias_cierre|pluralize:"es" }})</div></div>
+        <div class="col-6"><div class="cifra">{{ i.dias_disponibles|default_if_none:"—" }}</div><div class="small text-secondary">Promedio de las disponibles hoy ({{ i.n_disponibles }})</div></div>
+      </div>
+    </div>
+
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Origen de las oportunidades</div>
+      <table class="table table-crm"><tbody>
+        {% for o in i.por_origen %}<tr><td>{{ o.origen }}</td><td class="text-end fw-semibold">{{ o.total }}</td></tr>
+        {% empty %}<tr><td class="text-secondary small">Sin oportunidades en el período.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Captación</div>
+      <div class="tarjeta-cuerpo small">
+        <div>Aceptadas: <strong>{{ i.captaciones.aceptadas }}</strong> · Rechazadas: <strong>{{ i.captaciones.rechazadas }}</strong> · Por evaluar: <strong>{{ i.captaciones.pendientes }}</strong></div>
+        <div>Desde el portal: <strong>{{ i.captaciones.web }}</strong></div>
+        <div class="mt-2">Encargos registrados: <strong>{{ i.encargos.total }}</strong> ({{ i.encargos.exclusivos }} con exclusividad)</div>
+      </div>
+    </div>
+
+    {% if i.motivos %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Últimos motivos de pérdida</div>
+      <div class="tarjeta-cuerpo small">{% for m in i.motivos %}<div class="nota">{{ m }}</div>{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
