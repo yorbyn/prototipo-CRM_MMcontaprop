@@ -1,0 +1,23 @@
+{% extends "core/base_crm.html" %}
+{% block titulo_crm %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div>
+    <div class="small text-secondary"><a href="{% url 'comercial:lista' %}">Oportunidades</a> / Nueva</div>
+    <h1>{{ titulo }}</h1>
+    <div class="sub">La propiedad puede quedar vacía si el interesado aún no elige una.</div>
+  </div>
+  <a href="{% url 'comercial:lista' %}" class="btn btn-light">Cancelar</a>
+</div>
+
+<form method="post" class="validar" novalidate style="max-width: 720px">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+  <div class="tarjeta mb-3"><div class="tarjeta-cuerpo">
+    {% include "partials/campo.html" with field=form.contacto %}
+    {% include "partials/campo.html" with field=form.propiedad %}
+    {% include "partials/campo.html" with field=form.mensaje %}
+  </div></div>
+  <button class="btn btn-primary px-4"><i class="bi bi-check-lg"></i> Crear oportunidad</button>
+</form>
+{% endblock %}

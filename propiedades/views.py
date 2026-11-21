@@ -7,7 +7,9 @@ from django.views.decorators.http import require_POST
 from core.permisos import crm_requerido
 
 from actividades.models import Actividad
-from captacion.models import publicar_fotos_solicitud
+from actividades.forms import ActividadForm, ProgramarForm
+from captacion.models import SolicitudCaptacion, fotos_solicitud_pendientes, publicar_fotos_solicitud
+from comercial.cruce import interesados_para
 from core.imagenes import limpiar_imagen
 
 from .models import Propiedad, FotoPropiedad, TipoPropiedad
@@ -82,6 +84,14 @@ def detalle_propiedad(request, pk):
         "destino": "propiedad",
         "documentos": propiedad.documentos.all(),
         "form_documento": DocumentoForm(),
+        "encargos": propiedad.encargos.all(),
+        "fotos_privadas": fotos_solicitud_pendientes(propiedad),
+        "solicitud": SolicitudCaptacion.objects.filter(propiedad=propiedad).first(),
+        "oportunidades": propiedad.oportunidades.select_related("contacto"),
+        "interesados": interesados_para(propiedad),
+        "actividades": propiedad.actividades.select_related("contacto")[:80],
+        "form_actividad": ActividadForm(),
+        "form_programar": ProgramarForm(fijo="propiedad"),
     })
 
 @crm_requerido

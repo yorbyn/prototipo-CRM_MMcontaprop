@@ -60,7 +60,7 @@ def interesados_para(propiedad, limite=50):
     if propiedad.estado in ESTADOS_NO_OFRECIBLES:
         return []
     p = propiedad
-    q = Q(operacion=p.operacion) & (Q(tipo="") | Q(tipo=p.tipo)) & (Q(zona="") | Q(zona=p.zona))
+    q = Q(operacion=p.operacion) & (Q(tipo__isnull=True) | Q(tipo=p.tipo)) & (Q(zona="") | Q(zona=p.zona))
     q &= Q(dormitorios_min__isnull=True) | Q(dormitorios_min=0) | (
         Q(dormitorios_min__lte=p.dormitorios) if p.dormitorios is not None else Q(pk__in=[]))
     sin_precio = Q(precio_min__isnull=True, precio_max__isnull=True)

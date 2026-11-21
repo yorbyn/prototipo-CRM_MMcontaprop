@@ -6,6 +6,8 @@ from django.contrib import messages
 
 from .forms import ContactoForm, PreferenciaForm
 from documentos.forms import DocumentoForm
+from actividades.forms import ActividadForm, ProgramarForm
+from comercial.cruce import propiedades_para
 from .models import Contacto, PreferenciaBusqueda
 
 ROLES = {
@@ -44,6 +46,11 @@ def detalle_contacto(request, pk):
         "destino": "contacto",
         "documentos": contacto.documentos.all(),
         "form_documento": DocumentoForm(),
+        "oportunidades": contacto.oportunidades.select_related("propiedad"),
+        "calces": propiedades_para(contacto),
+        "actividades": contacto.actividades.select_related("propiedad")[:80],
+        "form_actividad": ActividadForm(),
+        "form_programar": ProgramarForm(fijo="contacto"),
     })
 
 @crm_requerido

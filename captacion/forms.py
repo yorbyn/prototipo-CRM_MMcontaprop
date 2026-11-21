@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import Q
 
 from core.forms import BootstrapMixin
 from core.validators import normalizar_rut

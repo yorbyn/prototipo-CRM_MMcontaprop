@@ -193,7 +193,7 @@ class SolicitudCaptacion(Auditado):
                 reutilizado = True
 
             propiedad = Propiedad(
-                titulo=f"{self.get_tipo_display()} en {self.comuna}"[:120],
+                titulo=f"{self.tipo.nombre} en {self.comuna}"[:120],
                 tipo=self.tipo, operacion=self.operacion, modalidad_arriendo=self.modalidad_arriendo,
                 precio=self.precio_esperado, moneda=self.moneda,
                 dormitorios=self.dormitorios, banos=self.banos,

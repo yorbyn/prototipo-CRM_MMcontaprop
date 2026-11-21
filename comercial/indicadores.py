@@ -179,9 +179,9 @@ def csv_operaciones(desde, hasta):
 
 
 def csv_propiedades():
-    qs = Propiedad.objects.select_related("propietario").order_by("codigo")
+    qs = Propiedad.objects.select_related("propietario", "tipo").order_by("codigo")
     return ["Código", "Título", "Tipo", "Operación", "Estado", "Precio", "Moneda", "Comuna", "Zona",
             "Propietario", "Publicada desde", "Días en mercado (disponibles)"], (
-        [p.codigo, p.titulo, p.get_tipo_display(), p.get_operacion_display(), p.get_estado_display(), p.precio,
+        [p.codigo, p.titulo, p.tipo.nombre, p.get_operacion_display(), p.get_estado_display(), p.precio,
          p.moneda, p.comuna, p.get_zona_display(), p.propietario.nombre, p.publicada_desde,
          dias_en_mercado(p) if p.estado == Propiedad.Estado.DISPONIBLE else None] for p in qs)

@@ -11,7 +11,7 @@
 
 {% if en_consola %}<div class="alert alert-info small"><i class="bi bi-terminal"></i> <strong>Modo desarrollo:</strong> los correos no se envían; se muestran en la terminal donde corre <code>runserver</code> y quedan en el historial. Para enviarlos de verdad, complete GMAIL_USUARIO y GMAIL_CONTRASENA_APLICACION en <code>.env</code>.</div>{% endif %}
 {% if not configurado %}<div class="alert alert-warning">El correo aún no está configurado. Defina <code>GMAIL_USUARIO</code> y <code>GMAIL_CONTRASENA_APLICACION</code> en el archivo <code>.env</code> (ver README).</div>{% endif %}
-{% if contacto and not contacto.email %}<div class="alert alert-warning">Este contacto no tiene correo registrado. <a href="{% url 'contactos:editar' contacto.pk %}">Agréguelo en su ficha</a>.</div>{% endif %}
+{% if contacto and not contacto.email %}<div class="alert alert-warning">Este contacto no tiene correo registrado. <a href="{% url 'contactos:editar-contacto' contacto.pk %}">Agréguelo en su ficha</a>.</div>{% endif %}
 
 <div class="row g-3">
   <div class="col-xl-8">
