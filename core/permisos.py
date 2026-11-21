@@ -11,7 +11,8 @@ def tiene_acceso_crm(usuario):
         return False
     if usuario.is_superuser:
         return True
-    return usuario.is_staff and usuario.groups.filter(name=settings.GRUPO_CRM).exists()
+    return usuario.is_staff and usuario.groups.filter(
+    name__in=[settings.GRUPO_CRM, settings.GRUPO_TRABAJADORES]).exists()
 
 
 def crm_requerido(vista):

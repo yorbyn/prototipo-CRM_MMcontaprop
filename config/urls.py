@@ -11,6 +11,7 @@ urlpatterns = [
     path("crm/captacion/", include("captacion.urls")),
     path("crm/comercial/", include("comercial.urls")),
     path("crm/correo/", include("correo.urls")),
+    path("crm/usuarios/", include("usuarios.urls")),
     path("", include("portal.urls")),
 ]
 

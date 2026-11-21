@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "comercial",
     "correo",
     "portal",
+    "usuarios",
 ]
 
 MIDDLEWARE = [
@@ -135,6 +136,7 @@ EMPRESA = {
 MAX_FOTO_MB = 5
 MAX_DOCUMENTO_MB = 10
 GRUPO_CRM = "Administración CRM"
+GRUPO_TRABAJADORES = "Trabajadores CRM"
 PORTAL_MAX_ENVIOS = 5
 PORTAL_VENTANA_SEGUNDOS = 60 * 60
 PROXIES_CONFIABLES = []
