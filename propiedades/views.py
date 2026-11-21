@@ -94,13 +94,13 @@ def detalle_propiedad(request, pk):
         "form_programar": ProgramarForm(fijo="propiedad"),
     })
 
-@crm_requerido
 def _mostrar_errores(request, form):
     for errores in form.errors.values():
         for e in errores:
             messages.error(request, e)
 
 @crm_requerido
+@require_POST
 def cambiar_estado(request, pk):
     propiedad = get_object_or_404(Propiedad, pk=pk)
     form = CambioEstadoForm(request.POST)
@@ -151,6 +151,7 @@ def tipos(request):
 
 
 @crm_requerido
+@require_POST
 def tipo_editar(request, clave=None):
     tipo = get_object_or_404(TipoPropiedad, clave=clave) if clave else None
     form = TipoPropiedadForm(request.POST or None, instance=tipo)
@@ -162,6 +163,7 @@ def tipo_editar(request, clave=None):
 
 
 @crm_requerido
+@require_POST
 def tipo_activar(request, clave):
     tipo = get_object_or_404(TipoPropiedad, clave=clave)
     tipo.activo = not tipo.activo
@@ -172,6 +174,7 @@ def tipo_activar(request, clave):
 
 
 @crm_requerido
+@require_POST
 def tipo_eliminar(request, clave):
     tipo = get_object_or_404(TipoPropiedad, clave=clave)
     if tipo.en_uso:
@@ -184,6 +187,7 @@ def tipo_eliminar(request, clave):
 
 
 @crm_requerido
+@require_POST
 def subir_fotos(request, pk):
     propiedad = get_object_or_404(Propiedad, pk=pk)
     form = FotosForm(request.POST, request.FILES)
@@ -204,6 +208,7 @@ def subir_fotos(request, pk):
 
 
 @crm_requerido
+@require_POST
 def foto_principal(request, foto_id):
     foto = get_object_or_404(FotoPropiedad, pk=foto_id)
     with transaction.atomic():
@@ -215,6 +220,7 @@ def foto_principal(request, foto_id):
 
 
 @crm_requerido
+@require_POST
 def eliminar_foto(request, foto_id):
     foto = get_object_or_404(FotoPropiedad, pk=foto_id)
     propiedad = foto.propiedad

@@ -3,6 +3,7 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, render, redirect
 from core.permisos import crm_requerido
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 
 from .forms import ContactoForm, PreferenciaForm
 from documentos.forms import DocumentoForm
@@ -79,6 +80,7 @@ def editar_contacto(request, pk):
     })
 
 @crm_requerido
+@require_POST
 def crear_preferencia(request, pk):
     contacto = get_object_or_404(Contacto, pk=pk)
     if not contacto.es_interesado:
@@ -107,6 +109,7 @@ def editar_preferencia(request, pk):
     return render(request, "contactos/preferencia_form.html", {"form": form, "contacto": contacto})
 
 @crm_requerido
+@require_POST
 def eliminar_preferencia(request, pk):
     preferencia = get_object_or_404(PreferenciaBusqueda, pk=pk)
     contacto = preferencia.contacto
