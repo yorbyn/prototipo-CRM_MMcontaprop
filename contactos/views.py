@@ -5,6 +5,7 @@ from core.permisos import crm_requerido
 from django.contrib import messages
 
 from .forms import ContactoForm, PreferenciaForm
+from documentos.forms import DocumentoForm
 from .models import Contacto, PreferenciaBusqueda
 
 ROLES = {
@@ -39,6 +40,10 @@ def detalle_contacto(request, pk):
         "arriendos": contacto.arriendos.all(),
         "preferencias": contacto.preferencias.all(),
         "form_preferencia": PreferenciaForm(),
+        "objeto": contacto,
+        "destino": "contacto",
+        "documentos": contacto.documentos.all(),
+        "form_documento": DocumentoForm(),
     })
 
 @crm_requerido

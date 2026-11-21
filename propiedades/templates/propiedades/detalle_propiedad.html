@@ -8,7 +8,7 @@
     <h1>{{ propiedad.titulo }}</h1>
     <div class="mt-1 d-flex gap-2 align-items-center flex-wrap">
       <span class="estado estado-{{ propiedad.estado }}">{{ propiedad.get_estado_display }}</span>
-      <span class="small text-secondary">{{ propiedad.get_tipo_display }} · {{ propiedad.get_operacion_display }}{% if propiedad.modalidad_arriendo %} ({{ propiedad.get_modalidad_arriendo_display|lower }}){% endif %} · Actualizada {{ propiedad.actualizado|date:"d-m-Y H:i" }}</span>
+      <span class="small text-secondary">{{ propiedad.tipo }} · {{ propiedad.get_operacion_display }}{% if propiedad.modalidad_arriendo %} ({{ propiedad.get_modalidad_arriendo_display|lower }}){% endif %} · Actualizada {{ propiedad.actualizado|date:"d-m-Y H:i" }}</span>
     </div>
   </div>
   <div class="d-flex gap-2">
@@ -26,10 +26,21 @@
           {% for f in fotos %}
             <div class="foto {% if f.es_principal %}principal{% endif %}">
               <img src="{{ f.imagen.url }}" alt="Foto {{ forloop.counter }}">
+              <div class="acciones">
+                {% if f.es_principal %}<span class="badge bg-morado me-auto align-self-center">Principal</span>{% else %}
+                <form method="post" action="{% url 'propiedades:foto_principal' f.pk %}" class="me-auto">{% csrf_token %}<button class="btn btn-sm btn-light" title="Usar como principal"><i class="bi bi-star"></i></button></form>{% endif %}
+                <form method="post" action="{% url 'propiedades:eliminar_foto' f.pk %}" data-confirmar="¿Eliminar esta fotografía?">{% csrf_token %}<button class="btn btn-sm btn-light" title="Eliminar"><i class="bi bi-trash"></i></button></form>
+              </div>
             </div>
           {% endfor %}
         </div>
-        {% else %}<p class="text-secondary small mb-0">Sin fotografías.</p>{% endif %}
+        {% endif %}
+        <form method="post" enctype="multipart/form-data" action="{% url 'propiedades:subir_fotos' propiedad.pk %}" class="d-flex gap-2 flex-wrap align-items-center">
+          {% csrf_token %}
+          <div class="flex-fill">{{ form_fotos.imagenes }}</div>
+          <button class="btn btn-dark"><i class="bi bi-upload"></i> Subir fotos</button>
+          <div class="w-100 small text-secondary">Puedes seleccionar varias a la vez. JPG o PNG, máx. 5 MB cada una. La foto principal es la portada en el portal.</div>
+        </form>
       </div>
     </div>
 
@@ -48,6 +59,22 @@
   </div>
 
   <div class="col-xl-4">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Estado y publicación</div>
+      <div class="tarjeta-cuerpo">
+        <form method="post" action="{% url 'propiedades:cambiar_estado' propiedad.pk %}" class="d-flex gap-2">
+          {% csrf_token %}
+          {{ form_estado.estado }}
+          <button class="btn btn-dark">Cambiar</button>
+        </form>
+        <p class="small text-secondary mt-2 mb-0">Solo las propiedades en estado <strong>Disponible</strong> aparecen en el portal. Vendida, arrendada, anulada o borrador se ocultan automáticamente.</p>
+        {% if errores_publicar and not propiedad.publicada %}
+          <div class="alert alert-warning small mt-3 mb-0"><strong>Para publicar falta:</strong><ul class="mb-0 ps-3">{% for e in errores_publicar %}<li>{{ e }}</li>{% endfor %}</ul></div>
+        {% endif %}
+      </div>
+      {% include "documentos/lista.html" %}
+    </div>
+    
+
     <div class="tarjeta mb-3"><div class="tarjeta-titulo">Datos privados <i class="bi bi-shield-lock text-secondary"></i></div>
       <div class="tarjeta-cuerpo">
         <div class="dato-privado mb-3"><div class="small text-secondary">Dirección exacta</div>{{ propiedad.direccion_exacta }}</div>

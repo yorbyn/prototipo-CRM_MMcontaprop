@@ -121,7 +121,7 @@ class Propiedad(Auditado):
         return f"{self.codigo or 'Nueva'} · {self.titulo}"
 
     def get_absolute_url(self):
-        return reverse("propiedades:detalle", args=[self.pk])
+        return reverse("propiedades:detalle-propiedad", args=[self.pk])
 
     @property
     def publicada(self):
