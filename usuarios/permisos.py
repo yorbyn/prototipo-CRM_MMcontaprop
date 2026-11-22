@@ -3,7 +3,7 @@ from functools import wraps
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 
-from .roles import es_admin_crm
+from .models import es_admin_crm
 
 
 def admin_requerido(vista):

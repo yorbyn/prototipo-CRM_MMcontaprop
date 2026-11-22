@@ -114,8 +114,9 @@ if GMAIL_USUARIO and EMAIL_HOST_PASSWORD:
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
+EMAIL_PORT = 465
 EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 EMAIL_HOST_USER = GMAIL_USUARIO
 DEFAULT_FROM_EMAIL = f"MMCONTAPROP SPA <{GMAIL_USUARIO}>" if GMAIL_USUARIO else "webmaster@localhost"
 CORREO_RESPONDER_A = GMAIL_USUARIO
@@ -130,7 +131,8 @@ EMPRESA = {
     "email": os.getenv("EMPRESA_EMAIL", ""),
 }
 
-# --- Roles del CRM (grupos de Django). Se reemplazan por Rol y Perfil en el paso 3 ---
+# --- Solo los usa la migración usuarios/0001_grupos_iniciales (roles antiguos).
+#     Los roles ahora son los modelos Rol y Perfil. Se quitan al regenerar las migraciones ---
 GRUPO_CRM = "Administración CRM"
 GRUPO_TRABAJADORES = "Trabajadores CRM"
 

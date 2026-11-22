@@ -1,18 +1,17 @@
 """Control de acceso al CRM privado. Tener sesión iniciada NO basta."""
 from functools import wraps
 
-from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 
+from usuarios.models import Perfil
+
 
 def tiene_acceso_crm(usuario):
+    """Entran el superusuario y los usuarios con perfil (Administrador o Trabajador)."""
     if not (usuario and usuario.is_authenticated and usuario.is_active):
         return False
-    if usuario.is_superuser:
-        return True
-    return usuario.is_staff and usuario.groups.filter(
-    name__in=[settings.GRUPO_CRM, settings.GRUPO_TRABAJADORES]).exists()
+    return usuario.is_superuser or Perfil.objects.filter(user=usuario).exists()
 
 
 def crm_requerido(vista):

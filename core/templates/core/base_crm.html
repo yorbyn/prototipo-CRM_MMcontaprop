@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static usuarios %}
+{% load static %}
 {% block titulo %}{% block titulo_crm %}CRM{% endblock %} · {{ EMPRESA.nombre }}{% endblock %}
 {% block css %}<link href="{% static 'css/crm.css' %}" rel="stylesheet"><meta name="robots" content="noindex, nofollow">{% endblock %}
 {% block body_clase %}crm{% endblock %}
@@ -23,7 +23,7 @@
     <a class="nav-link {% if ruta.app_name == 'captacion' %}activo{% endif %}" href="{% url 'captacion:lista' %}"><i class="bi bi-inbox"></i> Captación</a>
     <a class="nav-link {% if ruta.app_name == 'correo' %}activo{% endif %}" href="{% url 'correo:enviados' %}"><i class="bi bi-envelope"></i> Correos</a>
   </nav>
-  {% if request.user|es_admin %}
+  {% if user.is_superuser or user.perfil.rol.nombre == "Administrador" %}
   <div class="etiqueta">Administración</div>
   <nav class="nav flex-column">
     <a class="nav-link {% if ruta.app_name == 'usuarios' %}activo{% endif %}" href="{% url 'usuarios:usuario_lista' %}"><i class="bi bi-person-gear"></i> Usuarios</a>
