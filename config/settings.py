@@ -129,8 +129,3 @@ EMPRESA = {
     "telefono": os.getenv("EMPRESA_TELEFONO", ""),
     "email": os.getenv("EMPRESA_EMAIL", ""),
 }
-
-# --- Solo los usa la migración usuarios/0001_grupos_iniciales (roles antiguos).
-#     Los roles ahora son los modelos Rol y Perfil. Se quitan al regenerar las migraciones ---
-GRUPO_CRM = "Administración CRM"
-GRUPO_TRABAJADORES = "Trabajadores CRM"
