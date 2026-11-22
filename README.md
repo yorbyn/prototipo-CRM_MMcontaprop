@@ -19,7 +19,6 @@ Permite administrar internamente contactos, propiedades, captaciones, oportunida
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Instalación y ejecución](#instalación-y-ejecución)
 - [Primer uso](#primer-uso)
-- [Pruebas](#pruebas)
 - [Flujo de trabajo en GitHub](#flujo-de-trabajo-en-github)
 
 ## Funcionalidades
@@ -165,14 +164,6 @@ La base de datos parte vacía. Antes de usar el CRM:
 4. **Opcional: plantillas de correo** en **Correos → Plantillas**. Pueden usar variables como `{nombre}`, `{propiedad}`, `{codigo}`, `{precio}` o `{enlace}`, que se reemplazan al enviar.
 
 5. **Opcional: correo real.** Completa `GMAIL_USUARIO` y `GMAIL_CONTRASENA_APLICACION` en `.env` con una **contraseña de aplicación** de Google (requiere verificación en 2 pasos) y **reinicia el servidor**. Sin ellas, los correos se muestran en la terminal donde corre `runserver`.
-
-## Pruebas
-
-```powershell
-pipenv run python manage.py test
-```
-
-Las pruebas usan una base de datos temporal y carpetas temporales para los archivos, así que no modifican tus datos.
 
 ## Flujo de trabajo en GitHub
 
