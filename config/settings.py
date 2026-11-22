@@ -130,10 +130,7 @@ EMPRESA = {
 GRUPO_CRM = "Administración CRM"
 GRUPO_TRABAJADORES = "Trabajadores CRM"
 
-# --- Temporales: los usa código que se quita en los pasos 2 (core) y 9 (portal) ---
-LOGIN_MAX_INTENTOS = 5
-LOGIN_BLOQUEO_SEGUNDOS = 15 * 60
+# --- Temporales: los usa el límite de envíos del portal, que se quita en el paso 9 ---
 PORTAL_MAX_ENVIOS = 5
 PORTAL_VENTANA_SEGUNDOS = 60 * 60
 PROXIES_CONFIABLES = []
-CSP_ACTIVA = False
