@@ -1,10 +1,10 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.http import Http404
-from django.utils import timezone
 from django.db.models import Count
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from actividades.forms import ActividadForm, ProgramarForm
@@ -14,8 +14,6 @@ from documentos.forms import DocumentoForm
 from propiedades.models import Propiedad
 
 from . import indicadores as ind
-from .cruce import ESTADOS_NO_OFRECIBLES
-
 from .forms import (
     AsignarPropiedadForm,
     EtapaForm,
@@ -28,10 +26,9 @@ from .forms import (
     RespuestaOfertaForm,
     filtro_texto,
 )
-from .models import Oferta, Operacion, Oportunidad
+from .models import ESTADOS_NO_OFRECIBLES, Oferta, Operacion, Oportunidad
 
-# Create your views here.
-
+# Pestañas de la lista (?etapa=...) -> etapas que muestra cada una.
 VISTAS = {
     "abiertas": Oportunidad.ABIERTAS,
     **{e.value: (e.value,) for e in Oportunidad.Etapa},
@@ -40,8 +37,9 @@ VISTAS = {
 
 
 def _errores(request, e):
-    for m in e.messages:
-        messages.error(request, m)
+    """Muestra con messages cada error de un ValidationError."""
+    for mensaje in e.messages:
+        messages.error(request, mensaje)
 
 
 @crm_requerido
@@ -50,16 +48,17 @@ def lista(request):
     if vista not in VISTAS:
         vista = "abiertas"
     filtros = FiltroOportunidadesForm(request.GET or None)
-    qs = Oportunidad.objects.select_related("contacto", "propiedad").filter(etapa__in=VISTAS[vista])
+    oportunidades = Oportunidad.objects.select_related("contacto", "propiedad").filter(etapa__in=VISTAS[vista])
     if filtros.is_valid():
         if filtros.cleaned_data["q"]:
-            qs = filtro_texto(qs, filtros.cleaned_data["q"].strip())
+            oportunidades = filtro_texto(oportunidades, filtros.cleaned_data["q"].strip())
         if filtros.cleaned_data["origen"]:
-            qs = qs.filter(origen=filtros.cleaned_data["origen"])
+            oportunidades = oportunidades.filter(origen=filtros.cleaned_data["origen"])
+    # Cuántas hay en cada etapa (para los números de las pestañas).
     conteo = dict(Oportunidad.objects.order_by().values_list("etapa").annotate(n=Count("id")))
     pestanas = [{"clave": e.value, "nombre": e.label, "total": conteo.get(e.value, 0)} for e in Oportunidad.Etapa]
-    pagina = Paginator(qs.order_by("-creado", "-id"), 25).get_page(request.GET.get("page"))
-    return render(request, "comercial/lista.html", {
+    pagina = Paginator(oportunidades.order_by("-creado", "-id"), 25).get_page(request.GET.get("page"))
+    return render(request, "comercial/oportunidad_lista.html", {
         "pagina": pagina, "vista": vista, "pestanas": pestanas,
         "n_abiertas": sum(conteo.get(e, 0) for e in Oportunidad.ABIERTAS),
         "q": request.GET.get("q", ""), "origen": request.GET.get("origen", ""),
@@ -69,42 +68,43 @@ def lista(request):
 
 @crm_requerido
 def crear(request):
+    # ?contacto=<id> o ?propiedad=<id> dejan elegido ese dato (botón «Nueva» de las fichas).
     inicial = {k: request.GET[k] for k in ("contacto", "propiedad") if request.GET.get(k, "").isdigit()}
     form = OportunidadForm(request.POST or None, initial=inicial)
     if request.method == "POST" and form.is_valid():
-        op = form.save(commit=False)
-        op.origen = Oportunidad.Origen.MANUAL
-        op.guardar_por(request.user)
+        op = form.save()  # el origen por defecto es «Ingreso manual»
         op._registrar("Oportunidad creada manualmente.", request.user)
         messages.success(request, "Oportunidad creada.")
         return redirect(op)
-    return render(request, "comercial/form.html", {"form": form, "titulo": "Nueva oportunidad"})
+    return render(request, "comercial/oportunidad_form.html", {"form": form, "titulo": "Nueva oportunidad"})
 
 
 @crm_requerido
 def detalle(request, pk):
     op = get_object_or_404(Oportunidad.objects.select_related("contacto", "propiedad", "propiedad__propietario"), pk=pk)
-    contexto = {
+    otras_abiertas = []
+    if op.propiedad_id:
+        otras_abiertas = (Oportunidad.objects.filter(propiedad=op.propiedad, etapa__in=Oportunidad.ABIERTAS)
+                          .exclude(pk=op.pk).select_related("contacto"))
+    return render(request, "comercial/oportunidad_detalle.html", {
         "op": op,
-        "objeto": op, "destino": "oportunidad",
         # Pasos del embudo que se muestran en la ficha (la pérdida se muestra aparte).
         "pasos": [Oportunidad.Etapa.NUEVA, Oportunidad.Etapa.CONTACTADO, Oportunidad.Etapa.VISITA,
                   Oportunidad.Etapa.NEGOCIACION, Oportunidad.Etapa.GANADA],
-        "actividades": op.actividades.select_related("contacto", "propiedad")[:80],
-        "form_actividad": ActividadForm(),
-        "form_programar": ProgramarForm(fijo="oportunidad"),
         "form_etapa": EtapaForm(initial={"etapa": op.etapa}),
         "form_perdida": PerdidaForm(),
         "form_propiedad": AsignarPropiedadForm(oportunidad=op),
-        "otras_abiertas": (Oportunidad.objects.filter(propiedad=op.propiedad, etapa__in=Oportunidad.ABIERTAS)
-                           .exclude(pk=op.pk).select_related("contacto") if op.propiedad_id else []),
-    }
-    contexto.update({
+        "otras_abiertas": otras_abiertas,
         "ofertas": op.ofertas.all(),
-        "form_documento": DocumentoForm(),
         "form_oferta": OfertaForm(initial={"moneda": op.propiedad.moneda if op.propiedad_id else "CLP"}),
+        # Para los parciales de historial y de documentos (de la operación):
+        "objeto": op,
+        "destino": "oportunidad",
+        "actividades": op.actividades.select_related("contacto", "propiedad")[:80],
+        "form_actividad": ActividadForm(),
+        "form_programar": ProgramarForm(fijo="oportunidad"),
+        "form_documento": DocumentoForm(),
     })
-    return render(request, "comercial/detalle.html", contexto)
 
 
 @crm_requerido
@@ -208,12 +208,13 @@ def crear_desde_cruce(request):
     if existente:
         messages.info(request, "Ya existe una oportunidad abierta entre ambos.")
         return redirect(existente)
-    if not contacto.es_interesado or propiedad.estado in ESTADOS_NO_OFRECIBLES \
-            or propiedad.propietario_id == contacto.pk:
+    no_se_puede = (not contacto.es_interesado or propiedad.estado in ESTADOS_NO_OFRECIBLES
+                   or propiedad.propietario_id == contacto.pk)
+    if no_se_puede:
         messages.error(request, "No se puede abrir una oportunidad entre este contacto y esta propiedad.")
-        return redirect(request.POST.get("volver") == "propiedad" and propiedad or contacto)
-    op = Oportunidad(contacto=contacto, propiedad=propiedad, origen=Oportunidad.Origen.CRUCE)
-    op.guardar_por(request.user)
+        # Se vuelve a la ficha desde la que se pidió.
+        return redirect(propiedad if request.POST.get("volver") == "propiedad" else contacto)
+    op = Oportunidad.objects.create(contacto=contacto, propiedad=propiedad, origen=Oportunidad.Origen.CRUCE)
     op._registrar("Oportunidad creada desde el cruce de propiedades.", request.user)
     messages.success(request, f"Oportunidad creada con {contacto} por {propiedad.codigo}.")
     return redirect(op)
@@ -225,8 +226,8 @@ def crear_desde_cruce(request):
 
 @crm_requerido
 def cerrar(request, pk):
-    """Registrar el cierre: la oportunidad pasa a ganada y la propiedad, sola, a
-    vendida o arrendada."""
+    """Registrar el cierre: la oportunidad pasa a ganada y la propiedad, sola, a vendida o arrendada.
+    El precio y la comisión se proponen desde la oferta aceptada y el encargo vigente."""
     op = get_object_or_404(Oportunidad.objects.select_related("propiedad", "contacto"), pk=pk)
     if not op.abierta or not op.propiedad_id:
         messages.error(request, "Solo se cierra una oportunidad abierta y con propiedad.")
@@ -267,7 +268,7 @@ def operacion_editar(request, pk):
     anterior = operacion.resumen()
     form = OperacionForm(request.POST or None, instance=operacion)
     if request.method == "POST" and form.is_valid():
-        form.save(commit=False).guardar_por(request.user)
+        form.save()
         if operacion.resumen() != anterior:
             op._registrar(f"Operación actualizada: {operacion.resumen()}.", request.user)
         messages.success(request, "Operación actualizada.")
@@ -295,6 +296,7 @@ def operacion_anular(request, pk):
 # ---------------------------------------------------------------------------
 
 def _periodo(request):
+    """Período de ?desde=&hasta=. Por defecto, desde el 1 de enero hasta hoy."""
     hoy = timezone.localdate()
     defecto = {"desde": hoy.replace(month=1, day=1), "hasta": hoy}
     form = PeriodoForm(request.GET or None, initial=defecto)
