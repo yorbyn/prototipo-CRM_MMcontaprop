@@ -11,7 +11,6 @@
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-lg-9">
-      {% include "partials/mensajes.html" %}
       <form method="post" enctype="multipart/form-data" class="validar" novalidate>
         {% csrf_token %}
         {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}

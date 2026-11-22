@@ -20,6 +20,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "crispy_forms",
+    "crispy_bootstrap5",
     "core",
     "contactos",
     "propiedades",
@@ -83,6 +85,10 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# --- Formularios con crispy-forms (estilo Bootstrap 5) ---
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
 # --- Archivos estáticos y subidos ---
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
@@ -99,8 +105,6 @@ LOGIN_URL = "core:login"
 LOGIN_REDIRECT_URL = "core:dashboard"
 LOGOUT_REDIRECT_URL = "core:login"
 
-# El nivel "error" de messages se muestra con la clase "danger" de Bootstrap.
-MESSAGE_TAGS = {40: "danger"}
 
 # --- Correo (Gmail). Sin usuario ni contraseña, los correos se muestran en la terminal ---
 GMAIL_USUARIO = os.getenv("GMAIL_USUARIO", "")

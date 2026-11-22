@@ -7,9 +7,13 @@ name = "pypi"
 django = ">=5.2.19,<5.3"
 pillow = ">=11.0,<14"
 python-dotenv = "*"
+django-crispy-forms = "*"
+crispy-bootstrap5 = "*"
 
 [scripts]
 servidor = "python manage.py runserver"
 migrar = "python manage.py migrate"
 admin = "python manage.py createsuperuser"
 pruebas = "python manage.py test"
+
+[dev-packages]
