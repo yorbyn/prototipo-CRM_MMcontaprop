@@ -4,18 +4,18 @@
 {% block contenido %}
 <div class="crm-encabezado">
   <div>
-    <div class="small text-secondary"><a href="{% url 'contactos:lista-contacto' %}">Contactos</a> / Ficha</div>
+    <div class="small text-secondary"><a href="{% url 'contactos:contacto_lista' %}">Contactos</a> / Ficha</div>
     <h1>{{ contacto.nombre }}</h1>
     <div class="mt-1">{% for r in contacto.roles %}<span class="badge bg-morado-claro text-morado me-1">{{ r }}</span>{% endfor %}</div>
   </div>
   <div class="d-flex gap-2">
     {% if contacto.es_propietario %}
-      <a href="{% url 'propiedades:crear-propiedad' %}?propietario={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-house-add"></i> Nueva propiedad</a>
+      <a href="{% url 'propiedades:propiedad_crear' %}?propietario={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-house-add"></i> Nueva propiedad</a>
     {% endif %}
     {% if contacto.email %}
       <a href="{% url 'correo:redactar' %}?contacto={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-envelope"></i> Enviar correo</a>
     {% endif %}
-    <a href="{% url 'contactos:editar-contacto' contacto.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
+    <a href="{% url 'contactos:contacto_editar' contacto.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
   </div>
 </div>
 
@@ -32,7 +32,7 @@
         </dl>
       </div>
     </div>
-    {% include "documentos/lista.html" %}
+    {% include "documentos/_lista.html" %}
   </div>
 
   <div class="col-lg-7">
@@ -74,17 +74,17 @@
               </div>
             </div>
             <div class="d-flex gap-1">
-              <a href="{% url 'contactos:editar-preferencia' pr.pk %}" class="btn btn-sm btn-light" title="Editar"><i class="bi bi-pencil"></i></a>
-              <form method="post" action="{% url 'contactos:eliminar-preferencia' pr.pk %}" data-confirmar="¿Eliminar esta preferencia de búsqueda?">{% csrf_token %}
+              <a href="{% url 'contactos:preferencia_editar' pr.pk %}" class="btn btn-sm btn-light" title="Editar"><i class="bi bi-pencil"></i></a>
+              <form method="post" action="{% url 'contactos:preferencia_eliminar' pr.pk %}" data-confirmar="¿Eliminar esta preferencia de búsqueda?">{% csrf_token %}
                 <button class="btn btn-sm btn-light" title="Eliminar"><i class="bi bi-trash"></i></button></form>
             </div>
           </div>
         {% empty %}<p class="text-secondary small mb-0">Aún no se registra qué busca. Agregue una o más preferencias (operación, tipo, zona, precio, dormitorios).</p>{% endfor %}
         {% if contacto.es_interesado %}
         <div class="collapse mt-3" id="nueva-preferencia">
-          <form method="post" action="{% url 'contactos:crear-preferencia' contacto.pk %}" class="p-3 rounded-3 bg-morado-claro">
+          <form method="post" action="{% url 'contactos:preferencia_crear' contacto.pk %}" class="p-3 rounded-3 bg-morado-claro">
             {% csrf_token %}
-            {% with form=form_preferencia %}{% include "contactos/preferencia_campo.html" %}{% endwith %}
+            {% with form=form_preferencia %}{% include "contactos/_preferencia_campos.html" %}{% endwith %}
             <button class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> Guardar preferencia</button>
             <span class="small text-secondary ms-2">Campos vacíos = cualquiera.</span>
           </form>

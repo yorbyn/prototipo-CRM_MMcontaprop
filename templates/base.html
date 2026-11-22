@@ -8,6 +8,7 @@
   <link href="{% static 'vendor/fuentes/fuentes.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" rel="stylesheet">
   <link href="{% static 'css/base.css' %}" rel="stylesheet">
   {% block css %}{% endblock %}
 </head>
@@ -15,6 +16,36 @@
 {% block cuerpo %}{% endblock %}
 <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'js/app.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
+<!-- Mensajes de Django con Notyf (colores de la marca) -->
+<script>
+  {% if messages %}
+    const notyf = new Notyf({
+      duration: 4000,
+      dismissible: true,
+      position: { x: "right", y: "top" },
+      types: [
+        { type: "success", background: "#731bec" },
+        { type: "error", background: "#121014" },
+        { type: "warning", background: "#5a0fc4", icon: false },
+        { type: "info", background: "#b48cf2", icon: false },
+      ],
+    });
+
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        notyf.success("{{ message|escapejs }}");
+      {% elif message.tags == 'error' %}
+        notyf.error("{{ message|escapejs }}");
+      {% elif message.tags == 'warning' %}
+        notyf.open({ type: "warning", message: "{{ message|escapejs }}" });
+      {% else %}
+        notyf.open({ type: "info", message: "{{ message|escapejs }}" });
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</script>
 {% block js %}{% endblock %}
 </body>
 </html>

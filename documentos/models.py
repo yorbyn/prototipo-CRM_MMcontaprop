@@ -13,7 +13,6 @@ from core.validators import (
     TamanoMaximoValidator,
     almacenamiento_privado,
     nombre_aleatorio,
-    validar_contenido_archivo,
 )
 
 
@@ -32,11 +31,7 @@ class Documento(Auditado):
     archivo = models.FileField(
         upload_to=ruta_documento,
         storage=almacenamiento_privado,
-        validators=[
-            FileExtensionValidator(EXTENSIONES_DOCUMENTO),
-            TamanoMaximoValidator(settings.MAX_DOCUMENTO_MB),
-            validar_contenido_archivo,
-        ],
+        validators=[FileExtensionValidator(EXTENSIONES_DOCUMENTO), TamanoMaximoValidator(settings.MAX_DOCUMENTO_MB)],
     )
     contacto = models.ForeignKey("contactos.Contacto", on_delete=models.CASCADE, null=True, blank=True,
                                  related_name="documentos")

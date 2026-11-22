@@ -89,8 +89,8 @@ def calcular(desde, hasta):
             datos["moneda"] = moneda
             datos["pagada"] = datos["pagada"] or Decimal("0")
             comisiones.append(datos)
-    n_ventas = operaciones.filter(tipo="venta").count()
-    n_arriendos = operaciones.filter(tipo="arriendo").count()
+    n_ventas = operaciones.filter(tipo=Propiedad.Operacion.VENTA).count()
+    n_arriendos = operaciones.filter(tipo=Propiedad.Operacion.ARRIENDO).count()
 
     # --- Días en mercado ---
     cerradas_dias = [dias_en_mercado(o.propiedad, o) for o in operaciones]
@@ -122,8 +122,7 @@ def dias_en_mercado(propiedad, operacion=None):
 # ---------------------------------------------------------------------------
 
 def _celda(valor):
-    """Texto seguro para planillas: evita que un dato escrito por un visitante
-    (por ejemplo, «=HYPERLINK(...)») se ejecute como fórmula al abrir el CSV."""
+    """Convierte un valor al formato chileno para la planilla: Sí/No, coma decimal y fechas dd-mm-aaaa."""
     if valor is None:
         return ""
     if isinstance(valor, bool):
@@ -135,18 +134,14 @@ def _celda(valor):
             valor = timezone.localtime(valor)
             return valor.strftime("%d-%m-%Y %H:%M")
         return valor.strftime("%d-%m-%Y")
-    texto = str(valor).replace("\r", " ").replace("\n", " ")
-    if texto.lstrip()[:1] in ("=", "+", "-", "@", "\t", "＝", "＋", "－", "＠"):
-        texto = "'" + texto
-    return texto
+    return str(valor).replace("\r", " ").replace("\n", " ")  # cada registro en una sola línea
 
 
 def respuesta_csv(nombre, encabezados, filas):
     """CSV en UTF-8 con BOM y punto y coma: abre bien en Excel con configuración chilena."""
     respuesta = HttpResponse(content_type="text/csv; charset=utf-8")
-    respuesta["Content-Disposition"] = f'attachment; filename="{nombre}"'
-    respuesta["Cache-Control"] = "private, no-store"
-    respuesta.write("﻿")
+    respuesta["Content-Disposition"] = f'attachment; filename="{nombre}"'  # se descarga como archivo
+    respuesta.write("\ufeff")  # BOM: le indica a Excel que el archivo está en UTF-8 (tildes y ñ)
     escritor = csv.writer(respuesta, delimiter=";")
     escritor.writerow(encabezados)
     for fila in filas:

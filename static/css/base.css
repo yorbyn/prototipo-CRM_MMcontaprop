@@ -61,11 +61,13 @@ h1, h2, h3, h4, .titulo-marca { font-family: "Montserrat", var(--bs-body-font-fa
 .alert-danger, .alert-warning { background: #fff; border-color: var(--mm-negro); color: var(--mm-negro); font-weight: 500; }
 .invalid-feedback { color: var(--mm-morado-oscuro); font-weight: 500; }
 
+/* Campos con crispy-forms: etiqueta semibold y asterisco morado en los obligatorios */
+[id^="div_id_"] > .form-label { font-weight: 500; }
+.asteriskField { color: var(--mm-morado); margin-left: .2rem; }
+
 .foto-vacia { background: repeating-linear-gradient(45deg, #f4f1f9, #f4f1f9 10px, #ece6f6 10px, #ece6f6 20px);
   display: flex; align-items: center; justify-content: center; color: var(--mm-gris); }
 
-/* Campo trampa anti-spam */
-.campo-trampa { position: absolute !important; left: -9999px !important; height: 0; overflow: hidden; }
 /* Etapas de oportunidad */
 .estado-op-nueva       { background: var(--mm-morado); color: #fff; }
 .estado-op-contactado  { background: var(--mm-morado-claro); color: var(--mm-morado-oscuro); }

@@ -1,6 +1,6 @@
 from django.db.models import Prefetch
 
-from .models import FotoPropiedad, Propiedad
+from propiedades.models import FotoPropiedad, Propiedad
 
 CAMPOS_PUBLICOS = (
     "id", "codigo", "titulo", "tipo", "operacion", "modalidad_arriendo",

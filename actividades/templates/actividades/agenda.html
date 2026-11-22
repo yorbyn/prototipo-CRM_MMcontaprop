@@ -1,4 +1,5 @@
 {% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
 {% block titulo_crm %}Agenda{% endblock %}
 {% block contenido %}
 <div class="crm-encabezado">
@@ -27,11 +28,12 @@
       <div class="tarjeta-cuerpo">
         <form method="post" action="{% url 'actividades:programar' %}">
           {% csrf_token %}
-          {% include "partials/campo.html" with field=form.tipo %}
-          {% include "partials/campo.html" with field=form.fecha %}
-          {% include "partials/campo.html" with field=form.propiedad %}
-          {% include "partials/campo.html" with field=form.contacto %}
-          {% include "partials/campo.html" with field=form.descripcion %}
+          {% if form.non_field_errors %}<div class="alert alert-danger small">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+          {{ form.tipo|as_crispy_field }}
+          {{ form.fecha|as_crispy_field }}
+          {{ form.propiedad|as_crispy_field }}
+          {{ form.contacto|as_crispy_field }}
+          {{ form.descripcion|as_crispy_field }}
           <button class="btn btn-primary w-100"><i class="bi bi-calendar-plus"></i> Programar</button>
           <p class="small text-secondary mt-2 mb-0">Una visita requiere propiedad y contacto. Una tarea, al menos uno de los dos.</p>
         </form>

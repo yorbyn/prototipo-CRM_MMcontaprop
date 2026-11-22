@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import slugify
 
 from core.models import Auditado
@@ -121,7 +122,7 @@ class Propiedad(Auditado):
         return f"{self.codigo or 'Nueva'} · {self.titulo}"
 
     def get_absolute_url(self):
-        return reverse("propiedades:detalle-propiedad", args=[self.pk])
+        return reverse("propiedades:propiedad_detalle", args=[self.pk])
 
     @property
     def publicada(self):
@@ -160,12 +161,11 @@ class Propiedad(Auditado):
                 raise ValidationError(errores)
 
     def save(self, *args, **kwargs):
+        # La primera vez que se publica se guarda la fecha (para calcular los días en mercado).
         if self.estado == self.Estado.DISPONIBLE and self.publicada_desde is None:
-            from django.utils import timezone
             self.publicada_desde = timezone.now()
-            if kwargs.get("update_fields") is not None:
-                kwargs["update_fields"] = list(kwargs["update_fields"]) + ["publicada_desde"]
         super().save(*args, **kwargs)
+        # El código (MM-0001) usa el id, que recién existe después de guardar la primera vez.
         if not self.codigo:
             self.codigo = f"MM-{self.pk:04d}"
             super().save(update_fields=["codigo"])

@@ -1,4 +1,5 @@
 {% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
 {% block titulo_crm %}{{ titulo }}{% endblock %}
 {% block contenido %}
 <div class="crm-encabezado">
@@ -15,19 +16,19 @@
   <div class="row g-3">
     <div class="col-lg-8">
       <div class="tarjeta"><div class="tarjeta-titulo">Datos</div><div class="tarjeta-cuerpo"><div class="row">
-        {% if form.username %}<div class="col-md-6">{% include "partials/campo.html" with field=form.username %}</div>{% endif %}
-        <div class="col-md-6">{% include "partials/campo.html" with field=form.email %}</div>
-        <div class="col-md-6">{% include "partials/campo.html" with field=form.first_name %}</div>
-        <div class="col-md-6">{% include "partials/campo.html" with field=form.last_name %}</div>
+        {% if form.username %}<div class="col-md-6">{{ form.username|as_crispy_field }}</div>{% endif %}
+        <div class="col-md-6">{{ form.email|as_crispy_field }}</div>
+        <div class="col-md-6">{{ form.first_name|as_crispy_field }}</div>
+        <div class="col-md-6">{{ form.last_name|as_crispy_field }}</div>
         {% if form.password1 %}
-        <div class="col-md-6">{% include "partials/campo.html" with field=form.password1 %}</div>
-        <div class="col-md-6">{% include "partials/campo.html" with field=form.password2 %}</div>
+        <div class="col-md-6">{{ form.password1|as_crispy_field }}</div>
+        <div class="col-md-6">{{ form.password2|as_crispy_field }}</div>
         {% endif %}
       </div></div></div>
     </div>
     <div class="col-lg-4">
       <div class="tarjeta"><div class="tarjeta-titulo">Rol</div><div class="tarjeta-cuerpo">
-        {% include "partials/campo.html" with field=form.rol %}
+        {{ form.rol|as_crispy_field }}
         <p class="small text-secondary mb-0"><strong>Administrador:</strong> todo el CRM y la gestión de usuarios.<br><strong>Trabajador:</strong> todo el CRM, menos la gestión de usuarios.</p>
       </div></div>
       <button class="btn btn-primary w-100 mt-3 py-2"><i class="bi bi-check-lg"></i> Guardar</button>

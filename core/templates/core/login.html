@@ -9,9 +9,7 @@
   <div class="login-franja"></div>
   <h1 class="h5 text-center mb-1">Acceso administrativo</h1>
   <p class="text-center text-secondary small mb-4">Área privada del CRM</p>
-  {% if bloqueado %}
-    <div class="alert alert-danger small">Demasiados intentos fallidos. Espere 15 minutos e intente nuevamente.</div>
-  {% elif form.non_field_errors %}
+  {% if form.non_field_errors %}
     <div class="alert alert-danger small">{% for e in form.non_field_errors %}{{ e }} {% endfor %}</div>
   {% endif %}
   <form method="post">

@@ -1,17 +1,17 @@
 import os
 from pathlib import Path
-
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Cargar las variables del archivo .env
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = "django-insecure-^up)h3n^s34ohx_a0mcnor(y_9%0j_38f5ivh97^v*!$20-)**"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -20,6 +20,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "crispy_forms",
+    "crispy_bootstrap5",
     "core",
     "contactos",
     "propiedades",
@@ -70,47 +72,41 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 LANGUAGE_CODE = "es-cl"
-
 TIME_ZONE = "America/Santiago"
-
 USE_I18N = True
-
 USE_TZ = True
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Formularios con crispy-forms (estilo Bootstrap 5) ---
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# --- Archivos estáticos y subidos ---
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = BASE_DIR / "media"                  # fotos públicas de las propiedades
+PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"  # documentos y fotos de solicitudes (solo CRM)
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+MAX_FOTO_MB = 5
+MAX_DOCUMENTO_MB = 10
 
+# --- Inicio de sesión ---
 LOGIN_URL = "core:login"
 LOGIN_REDIRECT_URL = "core:dashboard"
 LOGOUT_REDIRECT_URL = "core:login"
 
-LOGIN_MAX_INTENTOS = 5
-LOGIN_BLOQUEO_SEGUNDOS = 15 * 60
 
-MESSAGE_TAGS = {40: "danger"}
-
-PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
-
+# --- Correo (Gmail). Sin usuario ni contraseña, los correos se muestran en la terminal ---
 GMAIL_USUARIO = os.getenv("GMAIL_USUARIO", "")
 EMAIL_HOST_PASSWORD = os.getenv("GMAIL_CONTRASENA_APLICACION", "").replace(" ", "")
 if GMAIL_USUARIO and EMAIL_HOST_PASSWORD:
@@ -120,12 +116,13 @@ else:
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 EMAIL_HOST_USER = GMAIL_USUARIO
 DEFAULT_FROM_EMAIL = f"MMCONTAPROP SPA <{GMAIL_USUARIO}>" if GMAIL_USUARIO else "webmaster@localhost"
 CORREO_RESPONDER_A = GMAIL_USUARIO
-CORREO_COPIA_OCULTA = False
 CORREO_LIMITE_DIARIO = 500
 
+# --- Datos de la empresa que se muestran en el portal ---
 EMPRESA = {
     "nombre": "MMCONTAPROP SPA",
     "lema": "Servicios Contables - Corretaje de Propiedades",
@@ -133,14 +130,7 @@ EMPRESA = {
     "email": os.getenv("EMPRESA_EMAIL", ""),
 }
 
-MAX_FOTO_MB = 5
-MAX_DOCUMENTO_MB = 10
+# --- Solo los usa la migración usuarios/0001_grupos_iniciales (roles antiguos).
+#     Los roles ahora son los modelos Rol y Perfil. Se quitan al regenerar las migraciones ---
 GRUPO_CRM = "Administración CRM"
 GRUPO_TRABAJADORES = "Trabajadores CRM"
-PORTAL_MAX_ENVIOS = 5
-PORTAL_VENTANA_SEGUNDOS = 60 * 60
-PROXIES_CONFIABLES = []
-CSP_ACTIVA = False
-
-LOGIN_MAX_INTENTOS = 5
-LOGIN_BLOQUEO_SEGUNDOS = 15 * 60

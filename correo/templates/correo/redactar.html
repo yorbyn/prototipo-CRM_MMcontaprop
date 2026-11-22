@@ -1,4 +1,5 @@
 {% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
 {% block titulo_crm %}Enviar correo{% endblock %}
 {% block contenido %}
 <div class="crm-encabezado">
@@ -10,8 +11,7 @@
 </div>
 
 {% if en_consola %}<div class="alert alert-info small"><i class="bi bi-terminal"></i> <strong>Modo desarrollo:</strong> los correos no se envían; se muestran en la terminal donde corre <code>runserver</code> y quedan en el historial. Para enviarlos de verdad, complete GMAIL_USUARIO y GMAIL_CONTRASENA_APLICACION en <code>.env</code>.</div>{% endif %}
-{% if not configurado %}<div class="alert alert-warning">El correo aún no está configurado. Defina <code>GMAIL_USUARIO</code> y <code>GMAIL_CONTRASENA_APLICACION</code> en el archivo <code>.env</code> (ver README).</div>{% endif %}
-{% if contacto and not contacto.email %}<div class="alert alert-warning">Este contacto no tiene correo registrado. <a href="{% url 'contactos:editar-contacto' contacto.pk %}">Agréguelo en su ficha</a>.</div>{% endif %}
+{% if contacto and not contacto.email %}<div class="alert alert-warning">Este contacto no tiene correo registrado. <a href="{% url 'contactos:contacto_editar' contacto.pk %}">Agréguelo en su ficha</a>.</div>{% endif %}
 
 <div class="row g-3">
   <div class="col-xl-8">
@@ -34,11 +34,11 @@
       {% if plantilla %}<input type="hidden" name="plantilla" value="{{ plantilla.clave }}">{% endif %}
       {% if volver %}<input type="hidden" name="volver" value="{{ volver }}">{% endif %}
       <div class="tarjeta mb-3"><div class="tarjeta-cuerpo">
-        {% if form.contacto %}{% include "partials/campo.html" with field=form.contacto %}{% endif %}
-        {% include "partials/campo.html" with field=form.asunto %}
-        {% include "partials/campo.html" with field=form.cuerpo %}
+        {% if form.contacto %}{{ form.contacto|as_crispy_field }}{% endif %}
+        {{ form.asunto|as_crispy_field }}
+        {{ form.cuerpo|as_crispy_field }}
       </div></div>
-      <button class="btn btn-primary px-4" {% if not configurado %}disabled{% endif %}><i class="bi bi-send"></i> Enviar</button>
+      <button class="btn btn-primary px-4"><i class="bi bi-send"></i> Enviar</button>
       <span class="small text-secondary ms-2">Se envía desde la cuenta de Gmail configurada; las respuestas llegan a su bandeja habitual.</span>
     </form>
   </div>

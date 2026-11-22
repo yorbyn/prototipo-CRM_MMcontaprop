@@ -1,9 +1,9 @@
 """
 Gestión comercial.
 
-La OPORTUNIDAD es el eje del seguimiento: un negocio en curso entre un
-interesado y una propiedad, que avanza por etapas (nueva, contactado, visita,
-negociación) hasta ganarse o perderse con motivo.
+La OPORTUNIDAD es el eje del seguimiento: un negocio en curso entre un interesado y una
+propiedad, que avanza por etapas (nueva, contactado, visita, negociación) hasta ganarse
+(se registra la OPERACIÓN) o perderse con motivo. Las OFERTAS se registran dentro de ella.
 """
 from decimal import Decimal
 
@@ -13,8 +13,14 @@ from django.db import models, transaction
 from django.urls import reverse
 from django.utils import timezone
 
+from actividades.models import Actividad
+from contactos.models import Contacto
 from core.models import Auditado
+from core.templatetags.formato import precio
 from propiedades.models import Propiedad
+
+# Propiedades que ya no se pueden ofrecer a un interesado.
+ESTADOS_NO_OFRECIBLES = (Propiedad.Estado.ANULADA, Propiedad.Estado.VENDIDA, Propiedad.Estado.ARRENDADA)
 
 
 class Oportunidad(Auditado):
@@ -33,7 +39,7 @@ class Oportunidad(Auditado):
         MANUAL = "manual", "Ingreso manual"
 
     ABIERTAS = (Etapa.NUEVA, Etapa.CONTACTADO, Etapa.VISITA, Etapa.NEGOCIACION)
-    # Etapas que exigen una propiedad definida.
+    # Etapas que exigen tener una propiedad asignada.
     CON_PROPIEDAD = (Etapa.VISITA, Etapa.NEGOCIACION, Etapa.GANADA)
 
     contacto = models.ForeignKey("contactos.Contacto", on_delete=models.PROTECT, related_name="oportunidades",
@@ -66,18 +72,23 @@ class Oportunidad(Auditado):
     @property
     def operacion(self):
         """La operación vigente; si no hay, la última anulada (o None)."""
-        ops = sorted(self.operaciones.all(), key=lambda o: (o.estado == "vigente", o.pk), reverse=True)
-        return ops[0] if ops else None
+        return (self.operaciones.filter(estado=Operacion.Estado.VIGENTE).first()
+                or self.operaciones.order_by("-pk").first())
 
     def clean(self):
-        if self.propiedad_id and self.propiedad.estado == "anulada":
+        if self.propiedad_id and self.propiedad.estado == Propiedad.Estado.ANULADA:
             raise ValidationError({"propiedad": "No se pueden crear oportunidades sobre una propiedad anulada."})
+
+    def _registrar(self, texto):
+        """Deja el hecho en el historial de la oportunidad (y de su contacto y propiedad)."""
+        Actividad.registrar_sistema(texto, oportunidad=self)
 
     # ------------------------------------------------------------------
     # Cambios de etapa (siempre quedan en el historial)
     # ------------------------------------------------------------------
 
-    def cambiar_etapa(self, nueva, usuario):
+    def cambiar_etapa(self, nueva):
+        """Devuelve True si la etapa cambió. Lanza ValidationError si no se puede."""
         if not self.abierta:
             raise ValidationError("La oportunidad está cerrada.")
         if nueva not in self.ABIERTAS:
@@ -88,11 +99,11 @@ class Oportunidad(Auditado):
             return False
         anterior = self.get_etapa_display()
         self.etapa = nueva
-        self.guardar_por(usuario)
-        self._registrar(f"Etapa cambiada de «{anterior}» a «{self.get_etapa_display()}».", usuario)
+        self.save()
+        self._registrar(f"Etapa cambiada de «{anterior}» a «{self.get_etapa_display()}».")
         return True
 
-    def perder(self, motivo, usuario):
+    def perder(self, motivo):
         motivo = (motivo or "").strip()
         if not self.abierta:
             raise ValidationError("La oportunidad ya está cerrada.")
@@ -101,24 +112,21 @@ class Oportunidad(Auditado):
         self.etapa = self.Etapa.PERDIDA
         self.motivo_perdida = motivo
         self.cerrada_en = timezone.now()
-        self.guardar_por(usuario)
-        self._registrar(f"Oportunidad perdida. Motivo: {motivo}", usuario)
+        self.save()
+        self._registrar(f"Oportunidad perdida. Motivo: {motivo}")
 
-    def asignar_propiedad(self, propiedad, usuario):
+    def asignar_propiedad(self, propiedad):
         if not self.abierta:
             raise ValidationError("La oportunidad está cerrada.")
-        if propiedad.estado in ("anulada", "vendida", "arrendada"):
+        if propiedad.estado in ESTADOS_NO_OFRECIBLES:
             raise ValidationError("La propiedad no está disponible para nuevas oportunidades.")
         anterior = self.propiedad
         self.propiedad = propiedad
-        self.guardar_por(usuario)
-        texto = f"Propiedad asignada: {propiedad}." if anterior is None else \
-            f"Propiedad cambiada de {anterior.codigo} a {propiedad.codigo}."
-        self._registrar(texto, usuario)
-
-    def _registrar(self, texto, usuario):
-        from actividades.models import Actividad
-        Actividad.registrar_sistema(texto, usuario, oportunidad=self)
+        self.save()
+        if anterior is None:
+            self._registrar(f"Propiedad asignada: {propiedad}.")
+        else:
+            self._registrar(f"Propiedad cambiada de {anterior.codigo} a {propiedad.codigo}.")
 
     # ------------------------------------------------------------------
     # Entrada desde el portal (consulta en una ficha o página «Contacto»)
@@ -126,38 +134,28 @@ class Oportunidad(Auditado):
 
     @classmethod
     def desde_portal(cls, *, nombre, email, telefono="", mensaje, propiedad=None, origen=Origen.PORTAL):
-        """Crea o reutiliza al contacto (por correo) como interesado y crea la
-        oportunidad. Si ya tiene una abierta por la misma propiedad, el mensaje se
-        agrega a esa y no se duplica."""
-        from actividades.models import Actividad
-        from contactos.models import Contacto
-
+        """Crea o reutiliza al contacto (por correo) como interesado y crea la oportunidad.
+        Si ya tiene una abierta por la misma propiedad, el mensaje se agrega a esa y no se duplica.
+        Devuelve (oportunidad, True si ya existía)."""
         email = (email or "").strip().lower()
         with transaction.atomic():
             contacto = Contacto.objects.filter(email__iexact=email).order_by("id").first()
             if contacto is None:
                 contacto = Contacto.objects.create(nombre=nombre, email=email, telefono=telefono, es_interesado=True)
             else:
-                cambios = []
-                if not contacto.es_interesado:
-                    contacto.es_interesado = True
-                    cambios.append("es_interesado")
+                # Se completa la ficha sin sobrescribir lo que ya tenía.
+                contacto.es_interesado = True
                 if not contacto.telefono and telefono:
                     contacto.telefono = telefono
-                    cambios.append("telefono")
-                if cambios:
-                    contacto.save(update_fields=cambios + ["actualizado"])
+                contacto.save()
 
             existente = None
             if propiedad is not None:
-                existente = cls.objects.filter(contacto=contacto, propiedad=propiedad,
-                                               etapa__in=cls.ABIERTAS).first()
-            oportunidad = existente or cls.objects.create(
-                contacto=contacto, propiedad=propiedad, origen=origen, mensaje=mensaje)
-            etiqueta = cls.Origen(origen).label
+                existente = cls.objects.filter(contacto=contacto, propiedad=propiedad, etapa__in=cls.ABIERTAS).first()
+            oportunidad = existente or cls.objects.create(contacto=contacto, propiedad=propiedad, origen=origen,
+                                                          mensaje=mensaje)
             datos = " · ".join(x for x in (nombre, email, telefono) if x)
-            Actividad.registrar_sistema(f"{etiqueta}. Datos enviados: {datos}. Mensaje: {mensaje}",
-                                        oportunidad=oportunidad)
+            oportunidad._registrar(f"{cls.Origen(origen).label}. Datos enviados: {datos}. Mensaje: {mensaje}")
         return oportunidad, existente is not None
 
 
@@ -194,29 +192,25 @@ class Oferta(Auditado):
         if self.fecha and self.fecha > timezone.localdate():
             raise ValidationError({"fecha": "La fecha no puede ser futura."})
 
-    def registrar(self, usuario):
+    def registrar(self):
         """Guarda la oferta, marca como contraofertada la pendiente de la otra parte,
         pasa la oportunidad a negociación si aún no lo estaba y deja constancia."""
-        from core.templatetags.formato import precio
-
         op = self.oportunidad
         if not op.abierta:
             raise ValidationError("La oportunidad está cerrada.")
         if not op.propiedad_id:
             raise ValidationError("Asigne una propiedad antes de registrar ofertas.")
         with transaction.atomic():
-            otra_parte = (self.Tipo.CONTRAOFERTA if self.tipo == self.Tipo.OFERTA else self.Tipo.OFERTA)
+            otra_parte = self.Tipo.CONTRAOFERTA if self.tipo == self.Tipo.OFERTA else self.Tipo.OFERTA
             op.ofertas.filter(tipo=otra_parte, respuesta=self.Respuesta.PENDIENTE).update(
                 respuesta=self.Respuesta.CONTRAOFERTADA)
-            self.guardar_por(usuario)
+            self.save()
             op._registrar(f"{self.get_tipo_display()} registrada: {precio(self.monto, self.moneda)} "
-                          f"({self.fecha:%d-%m-%Y}).", usuario)
+                          f"({self.fecha:%d-%m-%Y}).")
             if op.etapa in (Oportunidad.Etapa.NUEVA, Oportunidad.Etapa.CONTACTADO, Oportunidad.Etapa.VISITA):
-                op.cambiar_etapa(Oportunidad.Etapa.NEGOCIACION, usuario)
+                op.cambiar_etapa(Oportunidad.Etapa.NEGOCIACION)
 
-    def responder(self, respuesta, usuario):
-        from core.templatetags.formato import precio
-
+    def responder(self, respuesta):
         if respuesta not in (self.Respuesta.ACEPTADA, self.Respuesta.RECHAZADA):
             raise ValidationError("Respuesta no válida.")
         if self.respuesta != self.Respuesta.PENDIENTE:
@@ -224,14 +218,14 @@ class Oferta(Auditado):
         if not self.oportunidad.abierta:
             raise ValidationError("La oportunidad está cerrada.")
         self.respuesta = respuesta
-        self.guardar_por(usuario)
+        self.save()
         self.oportunidad._registrar(f"{self.get_tipo_display()} de {precio(self.monto, self.moneda)} "
-                                    f"{self.get_respuesta_display().lower()}.", usuario)
+                                    f"{self.get_respuesta_display().lower()}.")
 
 
 class Operacion(Auditado):
-    """Cierre de una oportunidad ganada: precio final, comisión, fechas clave y pago
-    de la comisión. Como máximo una operación vigente por propiedad. Se anula; no se borra."""
+    """Cierre de una oportunidad ganada: precio final, comisión, fechas clave y pago de la
+    comisión. Como máximo una operación vigente por propiedad. Se anula; no se borra."""
 
     class Estado(models.TextChoices):
         VIGENTE = "vigente", "Vigente"
@@ -259,10 +253,11 @@ class Operacion(Auditado):
         ordering = ["-creado", "-id"]
         verbose_name = "operación"
         verbose_name_plural = "operaciones"
+        # La base de datos impide dos operaciones vigentes para la misma propiedad u oportunidad.
+        # Si se anula, la oportunidad puede volver a cerrarse con una operación nueva.
         constraints = [
             models.UniqueConstraint(fields=["propiedad"], condition=models.Q(estado="vigente"),
                                     name="una_operacion_vigente_por_propiedad"),
-            # Si se anula, la oportunidad puede volver a cerrarse con una operación nueva.
             models.UniqueConstraint(fields=["oportunidad"], condition=models.Q(estado="vigente"),
                                     name="una_operacion_vigente_por_oportunidad"),
         ]
@@ -302,16 +297,15 @@ class Operacion(Auditado):
             raise ValidationError({"fecha_pago_comision": "La fecha de pago no puede ser futura."})
 
     def resumen(self):
-        from core.templatetags.formato import precio
         return (f"precio final {precio(self.precio_final, self.moneda)}, "
                 f"comisión {precio(self.comision_monto, self.comision_moneda)}"
                 f"{' (pagada)' if self.comision_pagada else ''}")
 
     # ------------------------------------------------------------------
 
-    @classmethod
-    def comision_sugerida(cls, propiedad, precio_final):
-        """Comisión según el encargo de corretaje vigente hoy (si lo hay)."""
+    @staticmethod
+    def comision_sugerida(propiedad, precio_final):
+        """Comisión según el encargo de corretaje vigente hoy. Devuelve (monto, encargo) o (None, None)."""
         if precio_final is None:
             return None, None
         hoy = timezone.localdate()
@@ -320,30 +314,28 @@ class Operacion(Auditado):
             return None, None
         return (Decimal(precio_final) * encargo.comision_pct / 100).quantize(Decimal("0.01")), encargo
 
-    def cerrar(self, usuario):
-        """Registra el cierre: oportunidad ganada y propiedad vendida o arrendada."""
-        from actividades.models import Actividad
-
+    def cerrar(self):
+        """Registra el cierre: la oportunidad queda ganada y la propiedad, vendida o arrendada."""
         op = self.oportunidad
-        with transaction.atomic():
-            op = Oportunidad.objects.select_for_update().get(pk=op.pk)
-            if not op.abierta:
-                raise ValidationError("La oportunidad ya está cerrada.")
-            if not op.propiedad_id:
-                raise ValidationError("La oportunidad no tiene propiedad.")
-            propiedad = Propiedad.objects.select_for_update().get(pk=op.propiedad_id)
-            if propiedad.estado in (Propiedad.Estado.ANULADA, Propiedad.Estado.VENDIDA, Propiedad.Estado.ARRENDADA):
-                raise ValidationError(f"La propiedad está {propiedad.get_estado_display().lower()}.")
-            if propiedad.operaciones.filter(estado=self.Estado.VIGENTE).exists():
-                raise ValidationError("La propiedad ya tiene una operación vigente.")
+        propiedad = op.propiedad
+        if not op.abierta:
+            raise ValidationError("La oportunidad ya está cerrada.")
+        if propiedad is None:
+            raise ValidationError("La oportunidad no tiene propiedad.")
+        if propiedad.estado in ESTADOS_NO_OFRECIBLES:
+            raise ValidationError(f"La propiedad está {propiedad.get_estado_display().lower()}.")
+        if propiedad.operaciones.filter(estado=self.Estado.VIGENTE).exists():
+            raise ValidationError("La propiedad ya tiene una operación vigente.")
 
-            self.oportunidad, self.propiedad, self.tipo = op, propiedad, propiedad.operacion
+        # transaction.atomic(): o se guarda todo (operación, oportunidad y propiedad) o nada.
+        with transaction.atomic():
+            self.propiedad, self.tipo = propiedad, propiedad.operacion
             self.full_clean(exclude=["oportunidad", "propiedad"])
-            self.guardar_por(usuario)
+            self.save()
 
             op.etapa = Oportunidad.Etapa.GANADA
             op.cerrada_en = timezone.now()
-            op.guardar_por(usuario)
+            op.save()
 
             anterior = propiedad.get_estado_display()
             if self.es_venta:
@@ -351,37 +343,32 @@ class Operacion(Auditado):
             else:
                 propiedad.estado = Propiedad.Estado.ARRENDADA
                 propiedad.arrendatario = op.contacto
-                if not op.contacto.es_arrendatario:
-                    op.contacto.es_arrendatario = True
-                    op.contacto.guardar_por(usuario)
-            propiedad.guardar_por(usuario)
+                op.contacto.es_arrendatario = True
+                op.contacto.save()
+            propiedad.save()
 
-            Actividad.registrar_sistema(f"Oportunidad ganada. Operación de {self.get_tipo_display().lower()} "
-                                        f"registrada: {self.resumen()}.", usuario, oportunidad=op)
+            op._registrar(f"Oportunidad ganada. Operación de {self.get_tipo_display().lower()} "
+                          f"registrada: {self.resumen()}.")
             Actividad.registrar_sistema(f"Estado cambiado de «{anterior}» a «{propiedad.get_estado_display()}» "
-                                        f"por el cierre de la oportunidad #{op.pk}.", usuario, propiedad=propiedad)
+                                        f"por el cierre de la oportunidad #{op.pk}.", propiedad=propiedad)
         return self
 
-    def cerrar_otras_como_perdidas(self, usuario):
-        """Marca como perdidas las demás oportunidades abiertas de la propiedad. Solo
-        se ejecuta cuando la administradora lo pide; nunca es automático."""
+    def cerrar_otras_como_perdidas(self):
+        """Marca como perdidas las demás oportunidades abiertas de la propiedad. Solo se hace
+        cuando la administradora lo pide; nunca es automático. Devuelve cuántas cerró."""
         if self.estado != self.Estado.VIGENTE:
             raise ValidationError("La operación está anulada.")
         motivo = "Propiedad vendida." if self.es_venta else "Propiedad arrendada."
         otras = (Oportunidad.objects.filter(propiedad=self.propiedad, etapa__in=Oportunidad.ABIERTAS)
                  .exclude(pk=self.oportunidad_id))
-        cerradas = 0
         with transaction.atomic():
-            for op in otras.select_for_update():
-                op.perder(motivo, usuario)
-                cerradas += 1
-        return cerradas
+            for op in otras:
+                op.perder(motivo)
+        return len(otras)
 
-    def anular(self, motivo, usuario):
-        """Anula la operación: la oportunidad vuelve a negociación y la propiedad,
-        a borrador. La administradora la vuelve a publicar a mano si corresponde."""
-        from actividades.models import Actividad
-
+    def anular(self, motivo):
+        """Anula la operación: la oportunidad vuelve a negociación y la propiedad, a borrador.
+        La administradora la vuelve a publicar a mano si corresponde."""
         motivo = (motivo or "").strip()
         if not motivo:
             raise ValidationError("Indique el motivo de la anulación.")
@@ -390,18 +377,20 @@ class Operacion(Auditado):
         with transaction.atomic():
             self.estado = self.Estado.ANULADA
             self.motivo_anulacion = motivo
-            self.guardar_por(usuario)
+            self.save()
+
             op = self.oportunidad
             op.etapa = Oportunidad.Etapa.NEGOCIACION
             op.cerrada_en = None
-            op.guardar_por(usuario)
-            p = self.propiedad
-            anterior = p.get_estado_display()
-            p.estado = Propiedad.Estado.BORRADOR
-            if not self.es_venta and p.arrendatario_id == op.contacto_id:
-                p.arrendatario = None
-            p.guardar_por(usuario)
-            Actividad.registrar_sistema(f"Operación anulada. Motivo: {motivo}. La oportunidad vuelve a negociación.",
-                                        usuario, oportunidad=op)
-            Actividad.registrar_sistema(f"Estado cambiado de «{anterior}» a «{p.get_estado_display()}» por la "
-                                        f"anulación de la operación.", usuario, propiedad=p)
+            op.save()
+
+            propiedad = self.propiedad
+            anterior = propiedad.get_estado_display()
+            propiedad.estado = Propiedad.Estado.BORRADOR
+            if not self.es_venta and propiedad.arrendatario_id == op.contacto_id:
+                propiedad.arrendatario = None
+            propiedad.save()
+
+            op._registrar(f"Operación anulada. Motivo: {motivo}. La oportunidad vuelve a negociación.")
+            Actividad.registrar_sistema(f"Estado cambiado de «{anterior}» a «{propiedad.get_estado_display()}» "
+                                        f"por la anulación de la operación.", propiedad=propiedad)

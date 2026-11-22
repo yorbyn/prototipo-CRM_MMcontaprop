@@ -1,3 +1,7 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import FotoPropiedad, Propiedad, TipoPropiedad
+
+admin.site.register(TipoPropiedad)
+admin.site.register(Propiedad)
+admin.site.register(FotoPropiedad)

@@ -1,8 +1,9 @@
 {% extends "portal/base_portal.html" %}
+{% load crispy_forms_tags %}
 {% load formato %}
 {% block titulo %}{{ p.titulo }} · {{ EMPRESA.nombre }}{% endblock %}
 {% block contenido %}
-{# Esta plantilla solo recibe el diccionario público "p" (ver propiedades/publico.py). #}
+{# Esta plantilla solo recibe el diccionario público "p" (ver portal/publico.py). #}
 <div class="container py-4">
   <a href="{% url 'portal:catalogo' %}" class="small"><i class="bi bi-arrow-left"></i> Volver al catálogo</a>
   <div class="row g-4 mt-1">
@@ -57,17 +58,14 @@
         <div class="small text-secondary">{{ p.operacion }}</div>
         <div class="ficha-precio mb-3">{{ p.precio|precio:p.moneda }}</div>
         <div class="small text-secondary mb-3">Código {{ p.codigo }}</div>
-        {% include "partials/mensajes.html" %}
         <h2 class="h6">¿Te interesa? Escríbenos</h2>
         <form method="post" class="validar" novalidate>
           {% csrf_token %}
           {% for e in form.non_field_errors %}<div class="alert alert-danger small">{{ e }}</div>{% endfor %}
-          {% include "partials/campo.html" with field=form.nombre %}
-          {% include "partials/campo.html" with field=form.email %}
-          {% include "partials/campo.html" with field=form.telefono %}
-          {% include "partials/campo.html" with field=form.mensaje %}
-          <div class="campo-trampa" aria-hidden="true">{{ form.sitio_web }}</div>
-          {% for e in form.sitio_web.errors %}<div class="alert alert-danger small">{{ e }}</div>{% endfor %}
+          {{ form.nombre|as_crispy_field }}
+          {{ form.email|as_crispy_field }}
+          {{ form.telefono|as_crispy_field }}
+          {{ form.mensaje|as_crispy_field }}
           <button class="btn btn-primary w-100 py-2"><i class="bi bi-send"></i> Enviar consulta</button>
           <p class="small text-secondary mt-2 mb-0">Usaremos tus datos solo para responder esta consulta.</p>
         </form>

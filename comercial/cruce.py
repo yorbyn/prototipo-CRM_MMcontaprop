@@ -12,10 +12,7 @@ from django.db.models import Q
 from contactos.models import PreferenciaBusqueda
 from propiedades.models import Propiedad
 
-from .models import Oportunidad
-
-# Propiedades que todavía se pueden ofrecer a un interesado.
-ESTADOS_NO_OFRECIBLES = (Propiedad.Estado.ANULADA, Propiedad.Estado.VENDIDA, Propiedad.Estado.ARRENDADA)
+from .models import ESTADOS_NO_OFRECIBLES, Oportunidad
 
 
 def _filtro_propiedades(pref):

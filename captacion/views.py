@@ -13,6 +13,7 @@ from propiedades.models import Propiedad
 from .forms import EncargoForm, SolicitudForm
 from .models import Encargo, FotoSolicitud, SolicitudCaptacion
 
+# Pestañas de la lista (?estado=...) -> estado de la solicitud. «todas» no filtra.
 FILTROS = {
     "pendientes": SolicitudCaptacion.Estado.PENDIENTE,
     "aceptadas": SolicitudCaptacion.Estado.ACEPTADA,
@@ -28,14 +29,14 @@ FILTROS = {
 def lista(request):
     estado = request.GET.get("estado", "pendientes")
     q = request.GET.get("q", "").strip()
-    qs = SolicitudCaptacion.objects.select_related("propiedad", "contacto")
+    solicitudes = SolicitudCaptacion.objects.select_related("propiedad", "tipo").order_by("-creado", "-pk")
     if estado in FILTROS:
-        qs = qs.filter(estado=FILTROS[estado])
+        solicitudes = solicitudes.filter(estado=FILTROS[estado])
     if q:
-        qs = qs.filter(Q(nombre__icontains=q) | Q(comuna__icontains=q) | Q(email__icontains=q)
-                       | Q(rut__icontains=q.replace(".", "").upper()))
-    pagina = Paginator(qs.order_by("-creado", "-pk"), 25).get_page(request.GET.get("page"))
-    return render(request, "captacion/lista.html", {
+        solicitudes = solicitudes.filter(Q(nombre__icontains=q) | Q(comuna__icontains=q) | Q(email__icontains=q)
+                                         | Q(rut__icontains=q.replace(".", "").upper()))
+    pagina = Paginator(solicitudes, 25).get_page(request.GET.get("page"))
+    return render(request, "captacion/solicitud_lista.html", {
         "pagina": pagina, "estado": estado, "q": q,
         "n_pendientes": SolicitudCaptacion.objects.filter(estado=SolicitudCaptacion.Estado.PENDIENTE).count(),
     })
@@ -43,23 +44,21 @@ def lista(request):
 
 @crm_requerido
 def crear(request):
+    """Ingreso manual (el origen por defecto es «Ingreso manual»)."""
     form = SolicitudForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        solicitud = form.save(commit=False)
-        solicitud.origen = SolicitudCaptacion.Origen.MANUAL
-        solicitud.guardar_por(request.user)
+        solicitud = form.save()
         messages.success(request, f"Solicitud #{solicitud.pk} registrada. Evalúela para crear la propiedad.")
         return redirect(solicitud)
-    return render(request, "captacion/form.html", {"form": form, "titulo": "Nueva solicitud de captación"})
+    return render(request, "captacion/solicitud_form.html", {"form": form, "titulo": "Nueva solicitud de captación"})
 
 
 @crm_requerido
 def detalle(request, pk):
-    solicitud = get_object_or_404(SolicitudCaptacion.objects.select_related("contacto", "propiedad"), pk=pk)
-    coincidencia, conflicto = (None, None)
-    if solicitud.pendiente:
-        coincidencia, conflicto = solicitud.buscar_contacto()
-    return render(request, "captacion/detalle.html", {
+    solicitud = get_object_or_404(SolicitudCaptacion, pk=pk)
+    # Mientras está por evaluar, se avisa si el propietario ya existe como contacto.
+    coincidencia, conflicto = solicitud.buscar_contacto() if solicitud.pendiente else (None, None)
+    return render(request, "captacion/solicitud_detalle.html", {
         "solicitud": solicitud, "coincidencia": coincidencia, "conflicto": conflicto,
         "fotos_privadas": solicitud.fotos.all(),
     })
@@ -73,10 +72,10 @@ def editar(request, pk):
         return redirect(solicitud)
     form = SolicitudForm(request.POST or None, instance=solicitud)
     if request.method == "POST" and form.is_valid():
-        form.save(commit=False).guardar_por(request.user)
+        form.save()
         messages.success(request, "Solicitud actualizada.")
         return redirect(solicitud)
-    return render(request, "captacion/form.html", {
+    return render(request, "captacion/solicitud_form.html", {
         "form": form, "titulo": f"Editar solicitud #{solicitud.pk}", "solicitud": solicitud,
     })
 
@@ -86,10 +85,10 @@ def editar(request, pk):
 def aceptar(request, pk):
     solicitud = get_object_or_404(SolicitudCaptacion, pk=pk)
     try:
-        propiedad = solicitud.aceptar(request.user)
+        propiedad = solicitud.aceptar()
     except ValidationError as e:
-        for m in e.messages:
-            messages.error(request, m)
+        for mensaje in e.messages:
+            messages.error(request, mensaje)
         return redirect(solicitud)
     messages.success(request, f"Solicitud aceptada. Se creó la propiedad {propiedad.codigo} en borrador "
                               f"con «{propiedad.propietario}» como propietario. Complete la ficha y "
@@ -102,11 +101,10 @@ def aceptar(request, pk):
 def rechazar(request, pk):
     solicitud = get_object_or_404(SolicitudCaptacion, pk=pk)
     try:
-        solicitud.rechazar(request.user)
+        solicitud.rechazar()
+        messages.success(request, f"Solicitud #{solicitud.pk} rechazada.")
     except ValidationError as e:
         messages.error(request, " ".join(e.messages))
-    else:
-        messages.success(request, f"Solicitud #{solicitud.pk} rechazada.")
     return redirect(solicitud)
 
 
@@ -117,13 +115,12 @@ def rechazar(request, pk):
 @crm_requerido
 def encargo_crear(request, propiedad_id):
     propiedad = get_object_or_404(Propiedad, pk=propiedad_id)
-    # La propiedad se fija en el servidor, nunca desde datos del navegador.
+    # La propiedad se fija aquí, nunca desde los datos que envía el navegador.
     form = EncargoForm(request.POST or None, instance=Encargo(propiedad=propiedad))
     if request.method == "POST" and form.is_valid():
-        encargo = form.save(commit=False)
-        encargo.guardar_por(request.user)
+        encargo = form.save()
         Actividad.registrar_sistema(f"Encargo de corretaje registrado: {encargo.resumen()}.",
-                                    request.user, propiedad=propiedad)
+                                    propiedad=propiedad)
         messages.success(request, "Encargo de corretaje registrado.")
         return redirect(propiedad.get_absolute_url() + "#encargos")
     return render(request, "captacion/encargo_form.html", {
@@ -133,16 +130,15 @@ def encargo_crear(request, propiedad_id):
 
 @crm_requerido
 def encargo_editar(request, pk):
-    encargo = get_object_or_404(Encargo.objects.select_related("propiedad"), pk=pk)
+    encargo = get_object_or_404(Encargo, pk=pk)
     propiedad = encargo.propiedad
     anterior = encargo.resumen()
     form = EncargoForm(request.POST or None, instance=encargo)
     if request.method == "POST" and form.is_valid():
-        encargo = form.save(commit=False)
-        encargo.guardar_por(request.user)
+        encargo = form.save()
         if encargo.resumen() != anterior:
             Actividad.registrar_sistema(f"Encargo de corretaje modificado: antes {anterior}; "
-                                        f"ahora {encargo.resumen()}.", request.user, propiedad=propiedad)
+                                        f"ahora {encargo.resumen()}.", propiedad=propiedad)
         messages.success(request, "Encargo actualizado.")
         return redirect(propiedad.get_absolute_url() + "#encargos")
     return render(request, "captacion/encargo_form.html", {
@@ -157,27 +153,25 @@ def encargo_editar(request, pk):
 
 @crm_requerido
 def foto(request, pk):
-    f = get_object_or_404(FotoSolicitud, pk=pk)
-    if not f.imagen or not f.imagen.storage.exists(f.imagen.name):
+    """Muestra una foto privada. Están fuera de media/, así que solo se ven a través de esta vista."""
+    foto = get_object_or_404(FotoSolicitud, pk=pk)
+    if not foto.imagen.storage.exists(foto.imagen.name):
         raise Http404("La foto no existe.")
-    tipo = "image/png" if f.imagen.name.lower().endswith(".png") else "image/jpeg"
-    respuesta = FileResponse(f.imagen.open("rb"), content_type=tipo)
-    respuesta["Cache-Control"] = "private, no-store"
-    respuesta["X-Content-Type-Options"] = "nosniff"
-    return respuesta
+    return FileResponse(foto.imagen.open("rb"))
 
 
 @crm_requerido
 @require_POST
 def foto_eliminar(request, pk):
-    f = get_object_or_404(FotoSolicitud.objects.select_related("solicitud__propiedad"), pk=pk)
-    solicitud = f.solicitud
-    if f.copiada_a_id:
+    foto = get_object_or_404(FotoSolicitud, pk=pk)
+    solicitud = foto.solicitud
+    if foto.copiada_a_id:
         messages.error(request, "Esta foto ya está en la galería pública; elimínela desde la propiedad.")
     else:
-        f.delete()
+        foto.imagen.delete(save=False)  # borra el archivo del disco
+        foto.delete()                   # borra el registro de la base de datos
         messages.success(request, "Foto eliminada. No se publicará.")
-    destino = request.POST.get("volver")
-    if destino == "propiedad" and solicitud.propiedad:
+    # Si se eliminó desde la ficha de la propiedad, se vuelve ahí.
+    if request.POST.get("volver") == "propiedad" and solicitud.propiedad:
         return redirect(solicitud.propiedad.get_absolute_url() + "#fotos")
     return redirect(solicitud)

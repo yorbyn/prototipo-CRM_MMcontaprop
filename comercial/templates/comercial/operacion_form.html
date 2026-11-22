@@ -1,4 +1,5 @@
 {% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
 {% load formato %}
 {% block titulo_crm %}{{ titulo }}{% endblock %}
 {% block contenido %}
@@ -19,19 +20,19 @@
   {% csrf_token %}
   {% if form.non_field_errors %}<div class="alert alert-danger">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
   <div class="tarjeta mb-3"><div class="tarjeta-titulo">Montos</div><div class="tarjeta-cuerpo"><div class="row">
-    <div class="col-md-8">{% include "partials/campo.html" with field=form.precio_final %}</div>
-    <div class="col-md-4">{% include "partials/campo.html" with field=form.moneda %}</div>
-    <div class="col-md-8">{% include "partials/campo.html" with field=form.comision_monto %}</div>
-    <div class="col-md-4">{% include "partials/campo.html" with field=form.comision_moneda %}</div>
+    <div class="col-md-8">{{ form.precio_final|as_crispy_field }}</div>
+    <div class="col-md-4">{{ form.moneda|as_crispy_field }}</div>
+    <div class="col-md-8">{{ form.comision_monto|as_crispy_field }}</div>
+    <div class="col-md-4">{{ form.comision_moneda|as_crispy_field }}</div>
   </div></div></div>
   <div class="tarjeta mb-3"><div class="tarjeta-titulo">Fechas</div><div class="tarjeta-cuerpo"><div class="row">
-    {% if form.fecha_promesa %}<div class="col-md-6">{% include "partials/campo.html" with field=form.fecha_promesa %}</div>
-    <div class="col-md-6">{% include "partials/campo.html" with field=form.fecha_escritura %}</div>{% endif %}
-    {% if form.fecha_firma_contrato %}<div class="col-md-6">{% include "partials/campo.html" with field=form.fecha_firma_contrato %}</div>{% endif %}
+    {% if form.fecha_promesa %}<div class="col-md-6">{{ form.fecha_promesa|as_crispy_field }}</div>
+    <div class="col-md-6">{{ form.fecha_escritura|as_crispy_field }}</div>{% endif %}
+    {% if form.fecha_firma_contrato %}<div class="col-md-6">{{ form.fecha_firma_contrato|as_crispy_field }}</div>{% endif %}
   </div></div></div>
   <div class="tarjeta mb-3"><div class="tarjeta-titulo">Pago de la comisión</div><div class="tarjeta-cuerpo"><div class="row align-items-center">
-    <div class="col-md-6">{% include "partials/campo.html" with field=form.comision_pagada %}</div>
-    <div class="col-md-6">{% include "partials/campo.html" with field=form.fecha_pago_comision %}</div>
+    <div class="col-md-6">{{ form.comision_pagada|as_crispy_field }}</div>
+    <div class="col-md-6">{{ form.fecha_pago_comision|as_crispy_field }}</div>
   </div></div></div>
   <button class="btn btn-primary px-4"><i class="bi bi-trophy"></i> {% if operacion %}Guardar cambios{% else %}Registrar cierre{% endif %}</button>
 </form>

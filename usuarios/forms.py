@@ -2,12 +2,12 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from core.forms import BootstrapMixin
+from .models import ADMINISTRADOR, TRABAJADOR
 
-from .roles import ROLES
+ROLES = [(ADMINISTRADOR, "Administrador"), (TRABAJADOR, "Trabajador")]
 
 
-class UsuarioCrearForm(BootstrapMixin, UserCreationForm):
+class UsuarioCrearForm(UserCreationForm):
     """Crea un usuario con contraseña (se pide dos veces y Django revisa que sea segura)."""
     first_name = forms.CharField(label="Nombre", max_length=150)
     last_name = forms.CharField(label="Apellido", max_length=150, required=False)
@@ -25,7 +25,7 @@ class UsuarioCrearForm(BootstrapMixin, UserCreationForm):
         return email
 
 
-class UsuarioEditarForm(BootstrapMixin, forms.ModelForm):
+class UsuarioEditarForm(forms.ModelForm):
     """Edita los datos y el rol. La contraseña no se cambia aquí."""
     rol = forms.ChoiceField(label="Rol", choices=ROLES)
 

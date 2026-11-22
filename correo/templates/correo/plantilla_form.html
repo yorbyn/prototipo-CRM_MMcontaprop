@@ -1,4 +1,5 @@
 {% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
 {% block titulo_crm %}Plantilla de correo{% endblock %}
 {% block contenido %}
 <div class="crm-encabezado">
@@ -12,10 +13,10 @@
       {% csrf_token %}
       {% if form.non_field_errors %}<div class="alert alert-danger">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
       <div class="tarjeta mb-3"><div class="tarjeta-cuerpo"><div class="row">
-        <div class="col-md-8">{% include "partials/campo.html" with field=form.nombre %}</div>
-        <div class="col-md-4">{% include "partials/campo.html" with field=form.clave %}</div>
-        <div class="col-12">{% include "partials/campo.html" with field=form.asunto %}</div>
-        <div class="col-12">{% include "partials/campo.html" with field=form.cuerpo %}</div>
+        <div class="col-md-8">{{ form.nombre|as_crispy_field }}</div>
+        <div class="col-md-4">{{ form.clave|as_crispy_field }}</div>
+        <div class="col-12">{{ form.asunto|as_crispy_field }}</div>
+        <div class="col-12">{{ form.cuerpo|as_crispy_field }}</div>
       </div></div></div>
       <button class="btn btn-primary px-4"><i class="bi bi-check-lg"></i> Guardar</button>
     </form>

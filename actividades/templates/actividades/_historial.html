@@ -1,4 +1,5 @@
-
+{% load crispy_forms_tags %}
+{# Historial de una ficha. Requiere: actividades, form_actividad, form_programar, destino y objeto #}
 <div class="tarjeta" id="historial">
   <div class="tarjeta-titulo">Historial de gestión
     <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#programar-{{ destino }}" aria-expanded="false"><i class="bi bi-calendar-plus"></i> Programar</button>
@@ -8,11 +9,11 @@
       <form method="post" action="{% url 'actividades:programar_en' destino objeto.pk %}" class="p-3 rounded-3 bg-morado-claro">
         {% csrf_token %}
         <div class="row g-2">
-          <div class="col-sm-5">{% include "partials/campo.html" with field=form_programar.tipo %}</div>
-          <div class="col-sm-7">{% include "partials/campo.html" with field=form_programar.fecha %}</div>
-          {% if form_programar.contacto %}<div class="col-12">{% include "partials/campo.html" with field=form_programar.contacto %}</div>{% endif %}
-          {% if form_programar.propiedad %}<div class="col-12">{% include "partials/campo.html" with field=form_programar.propiedad %}</div>{% endif %}
-          <div class="col-12">{% include "partials/campo.html" with field=form_programar.descripcion %}</div>
+          <div class="col-sm-5">{{ form_programar.tipo|as_crispy_field }}</div>
+          <div class="col-sm-7">{{ form_programar.fecha|as_crispy_field }}</div>
+          {% if form_programar.contacto %}<div class="col-12">{{ form_programar.contacto|as_crispy_field }}</div>{% endif %}
+          {% if form_programar.propiedad %}<div class="col-12">{{ form_programar.propiedad|as_crispy_field }}</div>{% endif %}
+          <div class="col-12">{{ form_programar.descripcion|as_crispy_field }}</div>
         </div>
         <button class="btn btn-sm btn-primary"><i class="bi bi-calendar-plus"></i> Programar</button>
         <span class="small text-secondary ms-2">Aparecerá en la agenda hasta marcarla como realizada.</span>

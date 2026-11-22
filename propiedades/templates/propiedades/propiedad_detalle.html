@@ -4,7 +4,7 @@
 {% block contenido %}
 <div class="crm-encabezado">
   <div>
-    <div class="small text-secondary"><a href="{% url 'propiedades:lista-propiedad' %}">Propiedades</a> / {{ propiedad.codigo }}</div>
+    <div class="small text-secondary"><a href="{% url 'propiedades:propiedad_lista' %}">Propiedades</a> / {{ propiedad.codigo }}</div>
     <h1>{{ propiedad.titulo }}</h1>
     <div class="mt-1 d-flex gap-2 align-items-center flex-wrap">
       <span class="estado estado-{{ propiedad.estado }}">{{ propiedad.get_estado_display }}</span>
@@ -14,7 +14,7 @@
   <div class="d-flex gap-2">
     {% if propiedad.publicada %}<a href="{% url 'portal:ficha' propiedad.codigo %}" target="_blank" rel="noopener" class="btn btn-outline-primary"><i class="bi bi-eye"></i> Ver en el portal</a>{% endif %}
     <a href="{% url 'correo:redactar' %}?propiedad={{ propiedad.pk }}&volver=propiedad" class="btn btn-outline-primary"><i class="bi bi-envelope"></i> Enviar ficha</a>
-    <a href="{% url 'propiedades:actualizar-propiedad' propiedad.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
+    <a href="{% url 'propiedades:propiedad_editar' propiedad.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
   </div>
 </div>
 
@@ -42,7 +42,7 @@
         {% endif %}
         <form method="post" enctype="multipart/form-data" action="{% url 'propiedades:subir_fotos' propiedad.pk %}" class="d-flex gap-2 flex-wrap align-items-center">
           {% csrf_token %}
-          <div class="flex-fill">{{ form_fotos.imagenes }}</div>
+          <div class="flex-fill"><input type="file" name="imagenes" class="form-control" accept=".jpg,.jpeg,.png" multiple required></div>
           <button class="btn btn-dark"><i class="bi bi-upload"></i> Subir fotos</button>
           <div class="w-100 small text-secondary">Puedes seleccionar varias a la vez. JPG o PNG, máx. 5 MB cada una. La foto principal es la portada en el portal.</div>
         </form>
@@ -106,7 +106,7 @@
       </div>
     </div>
 
-    {% include "documentos/lista.html" %}
+    {% include "documentos/_lista.html" %}
 
     {% include "comercial/_oportunidades.html" with mostrar="contacto" nueva_param="propiedad" nueva_id=propiedad.pk %}
 

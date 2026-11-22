@@ -16,7 +16,7 @@
           <td class="fw-semibold">{{ u.get_full_name|default:"—" }}</td>
           <td>{{ u.username }}{% if u == request.user %} <span class="small text-secondary">(tú)</span>{% endif %}</td>
           <td>{{ u.email|default:"—" }}</td>
-          <td>{% if rol == "administrador" %}<span class="badge bg-morado-claro text-morado">Administrador</span>{% elif rol == "trabajador" %}<span class="badge text-bg-light">Trabajador</span>{% else %}—{% endif %}</td>
+          <td>{% if rol == "Administrador" %}<span class="badge bg-morado-claro text-morado">Administrador</span>{% elif rol == "Trabajador" %}<span class="badge text-bg-light">Trabajador</span>{% else %}—{% endif %}</td>
           <td>{% if u.is_active %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
           <td class="text-end text-nowrap">
             <a href="{% url 'usuarios:usuario_editar' u.pk %}" class="btn btn-sm btn-light" title="Editar"><i class="bi bi-pencil"></i></a>

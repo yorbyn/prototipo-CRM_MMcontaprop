@@ -1,46 +1,36 @@
-from django.conf import settings
-from django.contrib.auth.views import LoginView
-from django.core.cache import cache
-from django.shortcuts import render
-from .limites import ip_cliente
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
+
 from .permisos import crm_requerido, tiene_acceso_crm
 
-"""Guía del equipo: etapa 2 viendo las plantillas primero
-Page 6 of 11"""
 
-class LoginProtegidoView(LoginView):
-    template_name = "core/login.html"
-    redirect_authenticated_user = True
+def iniciar_sesion(request):
+    # "next" es la página del CRM que se quería abrir antes de iniciar sesión.
+    siguiente = request.POST.get("next") or request.GET.get("next", "")
+    if not url_has_allowed_host_and_scheme(siguiente, allowed_hosts={request.get_host()}):
+        siguiente = ""  # solo se vuelve a páginas de este mismo sitio
 
-    def _clave(self):
-        return f"login-fallos:{ip_cliente(self.request)}"
+    if request.user.is_authenticated and tiene_acceso_crm(request.user):
+        return redirect(siguiente or "core:dashboard")
 
-    def _bloqueado(self):
-        return cache.get(self._clave(), 0) >= settings.LOGIN_MAX_INTENTOS
+    form = AuthenticationForm(request, data=request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        usuario = form.get_user()
+        if tiene_acceso_crm(usuario):
+            login(request, usuario)
+            return redirect(siguiente or "core:dashboard")
+        form.add_error(None, "Este usuario no tiene acceso al CRM.")
+    return render(request, "core/login.html", {"form": form, "next": siguiente})
 
-    def _registrar_fallo(self):
-        clave = self._clave()
-        cache.add(clave, 0, settings.LOGIN_BLOQUEO_SEGUNDOS)
-        try:
-            cache.incr(clave)
-        except ValueError:
-            cache.set(clave, 1, settings.LOGIN_BLOQUEO_SEGUNDOS)
 
-    def post(self, request, *args, **kwargs):
-        if self._bloqueado():
-            return self.render_to_response(self.get_context_data(form=self.get_form_class()(request), bloqueado=True))
-        return super().post(request, *args, **kwargs)
+@require_POST
+def cerrar_sesion(request):
+    logout(request)
+    return redirect("core:login")
 
-    def form_valid(self, form):
-        if not tiene_acceso_crm(form.get_user()):
-            form.add_error(None, "Este usuario no tiene acceso al CRM.")
-            return self.form_invalid(form)
-        cache.delete(self._clave())
-        return super().form_valid(form)
-    
-    def form_invalid(self, form):
-        self._registrar_fallo()
-        return super().form_invalid(form)
 
 @crm_requerido
 def dashboard(request):

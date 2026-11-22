@@ -1,4 +1,5 @@
 {% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
 {% block titulo_crm %}{{ titulo }}{% endblock %}
 {% block contenido %}
 <div class="crm-encabezado">
@@ -6,7 +7,7 @@
     <h1>{{ titulo }}</h1>
     <div class="sub">Los campos con <span class="text-morado">*</span> son obligatorios. Una persona puede tener varios roles.</div>
   </div>
-  <a href="{% if contacto %}{{ contacto.get_absolute_url }}{% else %}{% url 'contactos:lista-contacto' %}{% endif %}" class="btn btn-light">Cancelar</a>
+  <a href="{% if contacto %}{{ contacto.get_absolute_url }}{% else %}{% url 'contactos:contacto_lista' %}{% endif %}" class="btn btn-light">Cancelar</a>
 </div>
 
 <form method="post" class="validar" novalidate>
@@ -16,19 +17,19 @@
     <div class="col-lg-8">
       <div class="tarjeta"><div class="tarjeta-titulo">Datos personales</div><div class="tarjeta-cuerpo">
         <div class="row">
-          <div class="col-md-8">{% include "partials/campo.html" with field=form.nombre %}</div>
-          <div class="col-md-4">{% include "partials/campo.html" with field=form.rut %}</div>
-          <div class="col-md-6">{% include "partials/campo.html" with field=form.telefono %}</div>
-          <div class="col-md-6">{% include "partials/campo.html" with field=form.email %}</div>
-          <div class="col-12">{% include "partials/campo.html" with field=form.informacion_adicional %}</div>
+          <div class="col-md-8">{{ form.nombre|as_crispy_field }}</div>
+          <div class="col-md-4">{{ form.rut|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.telefono|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.email|as_crispy_field }}</div>
+          <div class="col-12">{{ form.informacion_adicional|as_crispy_field }}</div>
         </div>
       </div></div>
     </div>
     <div class="col-lg-4">
       <div class="tarjeta"><div class="tarjeta-titulo">Roles</div><div class="tarjeta-cuerpo">
-        {% include "partials/campo.html" with field=form.es_propietario %}
-        {% include "partials/campo.html" with field=form.es_arrendatario %}
-        {% include "partials/campo.html" with field=form.es_interesado %}
+        {{ form.es_propietario|as_crispy_field }}
+        {{ form.es_arrendatario|as_crispy_field }}
+        {{ form.es_interesado|as_crispy_field }}
         <p class="small text-secondary mb-0">El RUT es obligatorio cuando la persona es propietaria.</p>
       </div></div>
       <button class="btn btn-primary w-100 mt-3 py-2"><i class="bi bi-check-lg"></i> Guardar</button>

@@ -19,7 +19,7 @@
       </div>
     </div>
     <div class="mt-3">
-      {% include "documentos/lista.html" with documentos=operacion.documentos.all destino="operacion" objeto=operacion %}
+      {% include "documentos/_lista.html" with documentos=operacion.documentos.all destino="operacion" objeto=operacion %}
     </div>
     {% if operacion.estado == 'anulada' %}<div class="small text-secondary mt-2">Motivo de anulación: {{ operacion.motivo_anulacion }}</div>
     {% else %}
