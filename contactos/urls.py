@@ -5,11 +5,11 @@ from . import views
 app_name = "contactos"
 
 urlpatterns = [
-    path("", views.lista_contacto, name="lista-contacto"),
-    path("nueva/", views.crear_contacto, name="crear-contacto"),
-    path("<int:pk>/", views.detalle_contacto, name="detalle-contacto"),
-    path("<int:pk>/editar/", views.editar_contacto, name="editar-contacto"),
-    path("<int:pk>/preferencias/nueva/", views.crear_preferencia, name="crear-preferencia"),
-    path("preferencias/<int:pk>/editar/", views.editar_preferencia, name="editar-preferencia"),
-    path("preferencias/<int:pk>/eliminar/", views.eliminar_preferencia, name="eliminar-preferencia"),
+    path("", views.contacto_lista, name="contacto_lista"),
+    path("nueva/", views.contacto_crear, name="contacto_crear"),
+    path("<int:pk>/", views.contacto_detalle, name="contacto_detalle"),
+    path("<int:pk>/editar/", views.contacto_editar, name="contacto_editar"),
+    path("<int:pk>/preferencias/nueva/", views.preferencia_crear, name="preferencia_crear"),
+    path("preferencias/<int:pk>/editar/", views.preferencia_editar, name="preferencia_editar"),
+    path("preferencias/<int:pk>/eliminar/", views.preferencia_eliminar, name="preferencia_eliminar"),
 ]
