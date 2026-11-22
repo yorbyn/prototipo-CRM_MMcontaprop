@@ -5,6 +5,7 @@ from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
+from comercial.models import Operacion
 from contactos.models import Contacto
 from core.permisos import crm_requerido
 from propiedades.models import Propiedad
@@ -12,8 +13,7 @@ from propiedades.models import Propiedad
 from .forms import DocumentoForm
 from .models import Documento
 
-from comercial.models import Operacion
-
+# Fichas a las que se puede adjuntar un documento (el valor <destino> de la URL).
 DESTINOS = {"contacto": Contacto, "propiedad": Propiedad, "operacion": Operacion}
 
 
@@ -24,35 +24,36 @@ def subir(request, destino, pk):
     if modelo is None:
         return redirect("core:dashboard")
     objeto = get_object_or_404(modelo, pk=pk)
+    # La ficha dueña se fija aquí (por ejemplo Documento(contacto=objeto)), nunca desde el navegador.
     form = DocumentoForm(request.POST, request.FILES, instance=Documento(**{destino: objeto}))
     if form.is_valid():
-        form.instance.guardar_por(request.user)
+        form.save()
         messages.success(request, "Documento adjuntado.")
     else:
         for errores in form.errors.values():
-            for e in errores:
-                messages.error(request, e)
+            for error in errores:
+                messages.error(request, error)
     return redirect(objeto.get_absolute_url() + "#documentos")
 
 
 @crm_requerido
 def descargar(request, pk):
-    doc = get_object_or_404(Documento, pk=pk)
-    archivo = doc.archivo
-    if not archivo or not archivo.storage.exists(archivo.name):
+    """Los documentos están fuera de media/ y no tienen URL pública: solo se descargan
+    desde aquí, con sesión del CRM. FileResponse envía el archivo al navegador."""
+    documento = get_object_or_404(Documento, pk=pk)
+    archivo = documento.archivo
+    if not archivo.storage.exists(archivo.name):
         raise Http404("El archivo no existe.")
-    ext = os.path.splitext(archivo.name)[1]
-    respuesta = FileResponse(archivo.open("rb"), as_attachment=True, filename=f"{doc.nombre}{ext}")
-    respuesta["Cache-Control"] = "private, no-store"
-    return respuesta
+    extension = os.path.splitext(archivo.name)[1]
+    return FileResponse(archivo.open("rb"), as_attachment=True, filename=f"{documento.nombre}{extension}")
 
 
 @crm_requerido
 @require_POST
 def eliminar(request, pk):
-    doc = get_object_or_404(Documento, pk=pk)
-    destino = doc.duenio
-    doc.archivo.delete(save=False)  # borra el archivo del disco
-    doc.delete()                    # borra el registro de la base de datos
+    documento = get_object_or_404(Documento, pk=pk)
+    ficha = documento.duenio  # contacto, propiedad u operación a la que pertenece
+    documento.archivo.delete(save=False)  # borra el archivo del disco
+    documento.delete()                    # borra el registro de la base de datos
     messages.success(request, "Documento eliminado.")
-    return redirect(destino.get_absolute_url() + "#documentos") if destino else redirect("core:dashboard")
+    return redirect(ficha.get_absolute_url() + "#documentos")
