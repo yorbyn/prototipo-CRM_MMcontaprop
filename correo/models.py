@@ -11,6 +11,7 @@ from django.db import models
 from django.urls import reverse
 
 from core.models import Auditado
+from core.templatetags.formato import precio
 
 # Variables disponibles en las plantillas y qué significan.
 VARIABLES = {
@@ -90,14 +91,12 @@ class Mensaje(Auditado):
 
 def valores_para(contacto, propiedad=None, request=None):
     """Valores de las variables. De la propiedad solo se usan datos PÚBLICOS."""
-    from core.templatetags.formato import precio
-
     empresa = settings.EMPRESA
     v = {"nombre": contacto.nombre, "empresa": empresa["nombre"], "telefono_empresa": empresa["telefono"],
          "propiedad": "", "codigo": "", "precio": "", "comuna": "", "enlace": ""}
     if propiedad is not None:
         v.update(propiedad=propiedad.titulo, codigo=propiedad.codigo or "", comuna=propiedad.comuna,
                  precio=precio(propiedad.precio, propiedad.moneda))
-        if propiedad.estado == "disponible" and request is not None:
+        if propiedad.publicada and request is not None:
             v["enlace"] = request.build_absolute_uri(reverse("portal:ficha", args=[propiedad.codigo]))
     return v

@@ -2,14 +2,13 @@
 {% block titulo_crm %}Correos enviados{% endblock %}
 {% block contenido %}
 <div class="crm-encabezado">
-  <div><h1>Correos enviados</h1><div class="sub">Hoy: {{ hoy }} destinatarios de 500 permitidos por Gmail (la copia oculta cuenta). Cada correo enviado también queda en el historial del contacto.</div></div>
+  <div><h1>Correos enviados</h1><div class="sub">Hoy: {{ hoy }} de 500 correos permitidos por Gmail. Cada correo enviado también queda en el historial del contacto.</div></div>
   <div class="d-flex gap-2">
     <a href="{% url 'correo:plantillas' %}" class="btn btn-outline-primary"><i class="bi bi-file-text"></i> Plantillas</a>
     <a href="{% url 'correo:redactar' %}" class="btn btn-primary"><i class="bi bi-envelope-plus"></i> Nuevo correo</a>
   </div>
 </div>
 {% if en_consola %}<div class="alert alert-info small"><i class="bi bi-terminal"></i> <strong>Modo desarrollo:</strong> los correos no se envían; se muestran en la terminal donde corre <code>runserver</code> y quedan en el historial. Para enviarlos de verdad, complete GMAIL_USUARIO y GMAIL_CONTRASENA_APLICACION en <code>.env</code>.</div>{% endif %}
-{% if not configurado %}<div class="alert alert-warning">El correo aún no está configurado: defina <code>GMAIL_USUARIO</code> y <code>GMAIL_CONTRASENA_APLICACION</code> en <code>.env</code>.</div>{% endif %}
 <div class="tarjeta"><div class="table-responsive"><table class="table table-crm">
   <thead><tr><th>Fecha</th><th>Para</th><th>Asunto</th><th class="text-end">Estado</th></tr></thead>
   <tbody>

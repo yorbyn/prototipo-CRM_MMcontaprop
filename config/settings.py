@@ -114,13 +114,12 @@ if GMAIL_USUARIO and EMAIL_HOST_PASSWORD:
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 465
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = GMAIL_USUARIO
 DEFAULT_FROM_EMAIL = f"MMCONTAPROP SPA <{GMAIL_USUARIO}>" if GMAIL_USUARIO else "webmaster@localhost"
 CORREO_RESPONDER_A = GMAIL_USUARIO
-CORREO_COPIA_OCULTA = False
 CORREO_LIMITE_DIARIO = 500
 
 # --- Datos de la empresa que se muestran en el portal ---
