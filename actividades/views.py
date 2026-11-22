@@ -64,7 +64,7 @@ def programar(request):
     """Programa una visita o tarea desde la agenda."""
     form = ProgramarForm(request.POST)
     if form.is_valid():
-        form.save(commit=False).guardar_por(request.user)
+        form.save()
         messages.success(request, "Actividad programada.")
         return redirect("actividades:agenda")
     return render(request, "actividades/agenda.html", _contexto_agenda(request, form))
@@ -80,7 +80,7 @@ def programar_en(request, destino, pk):
     objeto = get_object_or_404(modelo, pk=pk)
     form = ProgramarForm(request.POST, fijo=destino, instance=_nueva_actividad(destino, objeto))
     if form.is_valid():
-        form.save(commit=False).guardar_por(request.user)
+        form.save()
         messages.success(request, "Actividad programada. Aparece en la agenda.")
     else:
         _mostrar_errores(request, form)
@@ -97,7 +97,7 @@ def registrar(request, destino, pk):
     objeto = get_object_or_404(modelo, pk=pk)
     form = ActividadForm(request.POST, instance=_nueva_actividad(destino, objeto))
     if form.is_valid():
-        form.save(commit=False).guardar_por(request.user)
+        form.save()
         messages.success(request, "Actividad registrada.")
     else:
         _mostrar_errores(request, form)
@@ -111,7 +111,7 @@ def completar(request, pk):
     actividad = get_object_or_404(Actividad, pk=pk)
     if actividad.en_agenda:
         actividad.estado = Actividad.Estado.REALIZADA
-        actividad.guardar_por(request.user)
+        actividad.save()
         messages.success(request, f"{actividad.get_tipo_display()} marcada como realizada.")
     # Solo se vuelve a una página de este mismo sitio.
     destino = request.POST.get("next", "")
