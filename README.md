@@ -117,7 +117,13 @@ pipenv run python manage.py runserver
 
 Luego abre `http://127.0.0.1:8000/` en el navegador.
 
-**Variables de entorno:** el archivo `.env` se crea a partir de `.env.example`. Revisa ese archivo para conocer las variables necesarias y completa sus valores antes de ejecutar el proyecto. El archivo `.env` no debe subirse al repositorio.
+**Variables de entorno:** el archivo `.env` se crea a partir de `.env.example` y **debe tener una `SECRET_KEY`**; sin ella, el proyecto no arranca. Para generar una:
+
+```powershell
+py -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Pega el resultado en `.env` como `SECRET_KEY='...'`. Deja `DEBUG=True` y `ALLOWED_HOSTS=127.0.0.1,localhost` para trabajar en local. El archivo `.env` no debe subirse al repositorio.
 
 **Variante:** también puedes activar el entorno virtual y ejecutar los comandos dentro de él:
 
@@ -169,3 +175,4 @@ git pull origin develop
 | `style` | Cambios visuales o de formato | `style: ajusta diseño responsivo del portal` |
 | `docs` | Documentación | `docs: actualiza documentación del proyecto` |
 | `test` | Pruebas | `test: agrega pruebas para captación` |
+| `refactor` | Cambio interno del código sin cambiar lo que hace | `refactor(contactos): simplifica vistas y formularios` |
