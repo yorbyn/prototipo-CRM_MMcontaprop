@@ -1,3 +1,7 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Encargo, FotoSolicitud, SolicitudCaptacion
+
+admin.site.register(SolicitudCaptacion)
+admin.site.register(Encargo)
+admin.site.register(FotoSolicitud)
