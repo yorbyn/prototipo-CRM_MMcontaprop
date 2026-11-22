@@ -22,7 +22,7 @@ def enviados_hoy():
     return Mensaje.objects.filter(estado=Mensaje.Estado.ENVIADO, creado__date=timezone.localdate()).count()
 
 
-def enviar(*, contacto, asunto, cuerpo, usuario, propiedad=None, oportunidad=None, plantilla=None):
+def enviar(*, contacto, asunto, cuerpo, propiedad=None, oportunidad=None, plantilla=None):
     """Envía el correo, lo guarda en «Correos enviados» y, si sale bien, lo deja en el historial
     del contacto (y de la propiedad u oportunidad). Devuelve el Mensaje.
     Lanza ValidationError si no se puede intentar el envío."""

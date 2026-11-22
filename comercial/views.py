@@ -73,7 +73,7 @@ def crear(request):
     form = OportunidadForm(request.POST or None, initial=inicial)
     if request.method == "POST" and form.is_valid():
         op = form.save()  # el origen por defecto es «Ingreso manual»
-        op._registrar("Oportunidad creada manualmente.", request.user)
+        op._registrar("Oportunidad creada manualmente.")
         messages.success(request, "Oportunidad creada.")
         return redirect(op)
     return render(request, "comercial/oportunidad_form.html", {"form": form, "titulo": "Nueva oportunidad"})
@@ -116,7 +116,7 @@ def cambiar_etapa(request, pk):
         messages.error(request, "Etapa no válida.")
         return redirect(op)
     try:
-        if op.cambiar_etapa(form.cleaned_data["etapa"], request.user):
+        if op.cambiar_etapa(form.cleaned_data["etapa"]):
             messages.success(request, f"Etapa actualizada a «{op.get_etapa_display()}».")
     except ValidationError as e:
         _errores(request, e)
@@ -132,7 +132,7 @@ def perder(request, pk):
         messages.error(request, "El motivo no puede superar los 500 caracteres.")
         return redirect(op)
     try:
-        op.perder(motivo, request.user)
+        op.perder(motivo)
         messages.success(request, "Oportunidad marcada como perdida.")
     except ValidationError as e:
         _errores(request, e)
@@ -148,7 +148,7 @@ def asignar_propiedad(request, pk):
         messages.error(request, "Elija una propiedad válida.")
         return redirect(op)
     try:
-        op.asignar_propiedad(form.cleaned_data["propiedad"], request.user)
+        op.asignar_propiedad(form.cleaned_data["propiedad"])
         messages.success(request, "Propiedad asignada.")
     except ValidationError as e:
         _errores(request, e)
@@ -167,7 +167,7 @@ def oferta_registrar(request, pk):
     form = OfertaForm(request.POST, instance=Oferta(oportunidad=op))
     if form.is_valid():
         try:
-            form.instance.registrar(request.user)
+            form.instance.registrar()
             messages.success(request, f"{form.instance.get_tipo_display()} registrada.")
         except ValidationError as e:
             _errores(request, e)
@@ -186,7 +186,7 @@ def oferta_responder(request, pk):
     try:
         if not form.is_valid():
             raise ValidationError("Respuesta no válida.")
-        oferta.responder(form.cleaned_data["respuesta"], request.user)
+        oferta.responder(form.cleaned_data["respuesta"])
         messages.success(request, f"Respuesta registrada: {oferta.get_respuesta_display().lower()}.")
     except ValidationError as e:
         _errores(request, e)
@@ -215,7 +215,7 @@ def crear_desde_cruce(request):
         # Se vuelve a la ficha desde la que se pidió.
         return redirect(propiedad if request.POST.get("volver") == "propiedad" else contacto)
     op = Oportunidad.objects.create(contacto=contacto, propiedad=propiedad, origen=Oportunidad.Origen.CRUCE)
-    op._registrar("Oportunidad creada desde el cruce de propiedades.", request.user)
+    op._registrar("Oportunidad creada desde el cruce de propiedades.")
     messages.success(request, f"Oportunidad creada con {contacto} por {propiedad.codigo}.")
     return redirect(op)
 
@@ -242,7 +242,7 @@ def cerrar(request, pk):
     })
     if request.method == "POST" and form.is_valid():
         try:
-            form.instance.cerrar(request.user)
+            form.instance.cerrar()
         except ValidationError as e:
             _errores(request, e)
             return redirect(op)
@@ -270,7 +270,7 @@ def operacion_editar(request, pk):
     if request.method == "POST" and form.is_valid():
         form.save()
         if operacion.resumen() != anterior:
-            op._registrar(f"Operación actualizada: {operacion.resumen()}.", request.user)
+            op._registrar(f"Operación actualizada: {operacion.resumen()}.")
         messages.success(request, "Operación actualizada.")
         return redirect(op.get_absolute_url() + "#operacion")
     return render(request, "comercial/operacion_form.html", {
@@ -283,7 +283,7 @@ def operacion_editar(request, pk):
 def operacion_anular(request, pk):
     operacion = get_object_or_404(Operacion.objects.select_related("oportunidad", "propiedad"), pk=pk)
     try:
-        operacion.anular(request.POST.get("motivo", "")[:500], request.user)
+        operacion.anular(request.POST.get("motivo", "")[:500])
         messages.success(request, "Operación anulada. La oportunidad volvió a negociación y la propiedad quedó "
                                   "en borrador: publíquela de nuevo cuando corresponda.")
     except ValidationError as e:
@@ -341,7 +341,7 @@ def cerrar_otras(request, pk):
         messages.error(request, "Debe confirmar la acción.")
         return redirect(operacion.oportunidad)
     try:
-        n = operacion.cerrar_otras_como_perdidas(request.user)
+        n = operacion.cerrar_otras_como_perdidas()
         messages.success(request, f"{n} oportunidad(es) cerrada(s) como perdida(s)." if n
                          else "No había otras oportunidades abiertas.")
     except ValidationError as e:

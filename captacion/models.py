@@ -30,7 +30,6 @@ from core.validators import (
     almacenamiento_privado,
     nombre_aleatorio,
     normalizar_rut,
-    validar_contenido_archivo,
     validar_rut,
 )
 from propiedades.models import FotoPropiedad, Propiedad, TipoPropiedad
@@ -139,7 +138,7 @@ class SolicitudCaptacion(Auditado):
                 return contacto, None
         return None, None
 
-    def aceptar(self, usuario):
+    def aceptar(self):
         """Crea o reutiliza el contacto propietario y crea la propiedad en borrador.
         Devuelve la propiedad creada. Lanza ValidationError si no se puede aceptar."""
         if not self.pendiente:
@@ -194,11 +193,11 @@ class SolicitudCaptacion(Auditado):
 
             Actividad.registrar_sistema(
                 f"Propiedad creada en estado Borrador desde la solicitud de captación #{self.pk}.",
-                usuario, contacto=contacto, propiedad=propiedad,
+                contacto=contacto, propiedad=propiedad,
             )
             if reutilizado:
                 Actividad.registrar_sistema(f"Solicitud de captación #{self.pk} aceptada; se reutilizó esta ficha.",
-                                            usuario, contacto=contacto)
+                                            contacto=contacto)
         return propiedad
 
     def rechazar(self):
@@ -283,8 +282,7 @@ class FotoSolicitud(models.Model):
     solicitud = models.ForeignKey(SolicitudCaptacion, on_delete=models.CASCADE, related_name="fotos")
     imagen = models.ImageField(
         upload_to=ruta_foto_solicitud, storage=almacenamiento_privado,
-        validators=[FileExtensionValidator(EXTENSIONES_FOTO), TamanoMaximoValidator(settings.MAX_FOTO_MB),
-                    validar_contenido_archivo],
+        validators=[FileExtensionValidator(EXTENSIONES_FOTO), TamanoMaximoValidator(settings.MAX_FOTO_MB)],
     )
     copiada_a = models.OneToOneField("propiedades.FotoPropiedad", on_delete=models.SET_NULL, null=True, blank=True,
                                      editable=False, related_name="origen_solicitud")

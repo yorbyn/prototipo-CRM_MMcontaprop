@@ -67,10 +67,9 @@ class Actividad(Auditado):
             raise ValidationError("La actividad debe asociarse a un contacto, una propiedad o una oportunidad.")
 
     @classmethod
-    def registrar_sistema(cls, texto, usuario=None, contacto=None, propiedad=None, oportunidad=None):
+    def registrar_sistema(cls, texto, contacto=None, propiedad=None, oportunidad=None):
         """Deja constancia automática de un hecho (cambio de estado, creación, etc.).
-        Si se indica una oportunidad, el registro también aparece en su contacto y su propiedad.
-        (El parámetro «usuario» ya no se usa: se quita al final del paso 10.)"""
+        Si se indica una oportunidad, el registro también aparece en su contacto y su propiedad."""
         if oportunidad is not None:
             contacto = contacto or oportunidad.contacto
             propiedad = propiedad or oportunidad.propiedad

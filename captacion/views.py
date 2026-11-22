@@ -85,7 +85,7 @@ def editar(request, pk):
 def aceptar(request, pk):
     solicitud = get_object_or_404(SolicitudCaptacion, pk=pk)
     try:
-        propiedad = solicitud.aceptar(request.user)
+        propiedad = solicitud.aceptar()
     except ValidationError as e:
         for mensaje in e.messages:
             messages.error(request, mensaje)
@@ -120,7 +120,7 @@ def encargo_crear(request, propiedad_id):
     if request.method == "POST" and form.is_valid():
         encargo = form.save()
         Actividad.registrar_sistema(f"Encargo de corretaje registrado: {encargo.resumen()}.",
-                                    request.user, propiedad=propiedad)
+                                    propiedad=propiedad)
         messages.success(request, "Encargo de corretaje registrado.")
         return redirect(propiedad.get_absolute_url() + "#encargos")
     return render(request, "captacion/encargo_form.html", {
@@ -138,7 +138,7 @@ def encargo_editar(request, pk):
         encargo = form.save()
         if encargo.resumen() != anterior:
             Actividad.registrar_sistema(f"Encargo de corretaje modificado: antes {anterior}; "
-                                        f"ahora {encargo.resumen()}.", request.user, propiedad=propiedad)
+                                        f"ahora {encargo.resumen()}.", propiedad=propiedad)
         messages.success(request, "Encargo actualizado.")
         return redirect(propiedad.get_absolute_url() + "#encargos")
     return render(request, "captacion/encargo_form.html", {

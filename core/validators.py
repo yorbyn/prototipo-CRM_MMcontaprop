@@ -67,8 +67,9 @@ EXTENSIONES_FOTO = ["jpg", "jpeg", "png"]
 EXTENSIONES_DOCUMENTO = ["pdf", "jpg", "jpeg", "png", "doc", "docx", "xls", "xlsx"]
 
 
-# Primeros bytes ("firma") que debe tener cada tipo de archivo. Evita, por ejemplo,
-# un ejecutable renombrado como .pdf.
+# YA NO LA USA NINGÚN MODELO. Se mantiene solo porque la nombran las migraciones antiguas
+# (captacion/0001 y documentos/0001); se borra al regenerar las migraciones en el cierre.
+# Revisaba los primeros bytes («firma») de cada tipo de archivo.
 FIRMAS_ARCHIVO = {
     "pdf": (b"%PDF",),
     "jpg": (b"\xff\xd8\xff",),

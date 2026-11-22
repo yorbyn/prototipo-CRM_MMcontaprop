@@ -11,8 +11,8 @@ document.addEventListener("DOMContentLoaded", function () {
   var operacion = document.getElementById("id_operacion");
   var modalidad = document.getElementById("id_modalidad_arriendo");
   if (operacion && modalidad) {
-    // Contenedor del campo: ".campo" (partials/campo.html) o el que crea crispy-forms.
-    var bloque = modalidad.closest(".campo") || document.getElementById("div_id_modalidad_arriendo");
+    // Contenedor del campo que crea crispy-forms (etiqueta + campo + ayuda).
+    var bloque = document.getElementById("div_id_modalidad_arriendo");
     var actualizar = function () {
       var esArriendo = operacion.value === "arriendo";
       if (bloque) bloque.style.display = esArriendo ? "" : "none";

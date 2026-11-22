@@ -57,7 +57,7 @@ def propiedad_crear(request):
     form = PropiedadForm(request.POST or None, initial={"propietario": request.GET.get("propietario")})
     if request.method == "POST" and form.is_valid():
         propiedad = form.save()
-        Actividad.registrar_sistema("Propiedad creada en estado Borrador.", request.user, propiedad=propiedad)
+        Actividad.registrar_sistema("Propiedad creada en estado Borrador.", propiedad=propiedad)
         messages.success(request, f"Propiedad {propiedad.codigo} creada como borrador. Ahora puedes subir fotografías.")
         return redirect(propiedad)
     return render(request, "propiedades/propiedad_form.html", {"form": form, "titulo": "Nueva propiedad"})
@@ -134,9 +134,9 @@ def cambiar_estado(request, pk):
         propiedad.save()
     if copiadas:
         Actividad.registrar_sistema(f"{copiadas} foto(s) enviadas por el propietario pasaron a la galería pública.",
-                                    request.user, propiedad=propiedad)
+                                    propiedad=propiedad)
     Actividad.registrar_sistema(f"Estado cambiado de «{anterior}» a «{propiedad.get_estado_display()}».",
-                                request.user, propiedad=propiedad)
+                                propiedad=propiedad)
     if propiedad.publicada:
         messages.success(request, "La propiedad ahora está publicada en el portal.")
     else:

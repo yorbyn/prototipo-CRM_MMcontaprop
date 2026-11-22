@@ -73,8 +73,6 @@ class Mensaje(Auditado):
                                     related_name="mensajes")
     plantilla = models.ForeignKey(PlantillaCorreo, on_delete=models.SET_NULL, null=True, blank=True)
     para = models.EmailField()
-    destinatarios = models.PositiveSmallIntegerField(default=1, editable=False,
-                                                     help_text="Para + copia oculta (Gmail cuenta destinatarios).")
     asunto = models.CharField(max_length=150)
     cuerpo = models.TextField()
     estado = models.CharField(max_length=8, choices=Estado.choices)

@@ -39,7 +39,7 @@ def redactar(request):
             valores = valores_para(destinatario, propiedad, request)
             try:
                 mensaje = enviar(contacto=destinatario, propiedad=propiedad, oportunidad=oportunidad,
-                                 plantilla=plantilla, usuario=request.user,
+                                 plantilla=plantilla,
                                  asunto=reemplazar(form.cleaned_data["asunto"], valores),
                                  cuerpo=reemplazar(form.cleaned_data["cuerpo"], valores))
             except ValidationError as e:

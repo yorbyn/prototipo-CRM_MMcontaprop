@@ -79,15 +79,15 @@ class Oportunidad(Auditado):
         if self.propiedad_id and self.propiedad.estado == Propiedad.Estado.ANULADA:
             raise ValidationError({"propiedad": "No se pueden crear oportunidades sobre una propiedad anulada."})
 
-    def _registrar(self, texto, usuario=None):
+    def _registrar(self, texto):
         """Deja el hecho en el historial de la oportunidad (y de su contacto y propiedad)."""
-        Actividad.registrar_sistema(texto, usuario, oportunidad=self)
+        Actividad.registrar_sistema(texto, oportunidad=self)
 
     # ------------------------------------------------------------------
     # Cambios de etapa (siempre quedan en el historial)
     # ------------------------------------------------------------------
 
-    def cambiar_etapa(self, nueva, usuario):
+    def cambiar_etapa(self, nueva):
         """Devuelve True si la etapa cambió. Lanza ValidationError si no se puede."""
         if not self.abierta:
             raise ValidationError("La oportunidad está cerrada.")
@@ -100,10 +100,10 @@ class Oportunidad(Auditado):
         anterior = self.get_etapa_display()
         self.etapa = nueva
         self.save()
-        self._registrar(f"Etapa cambiada de «{anterior}» a «{self.get_etapa_display()}».", usuario)
+        self._registrar(f"Etapa cambiada de «{anterior}» a «{self.get_etapa_display()}».")
         return True
 
-    def perder(self, motivo, usuario):
+    def perder(self, motivo):
         motivo = (motivo or "").strip()
         if not self.abierta:
             raise ValidationError("La oportunidad ya está cerrada.")
@@ -113,9 +113,9 @@ class Oportunidad(Auditado):
         self.motivo_perdida = motivo
         self.cerrada_en = timezone.now()
         self.save()
-        self._registrar(f"Oportunidad perdida. Motivo: {motivo}", usuario)
+        self._registrar(f"Oportunidad perdida. Motivo: {motivo}")
 
-    def asignar_propiedad(self, propiedad, usuario):
+    def asignar_propiedad(self, propiedad):
         if not self.abierta:
             raise ValidationError("La oportunidad está cerrada.")
         if propiedad.estado in ESTADOS_NO_OFRECIBLES:
@@ -124,9 +124,9 @@ class Oportunidad(Auditado):
         self.propiedad = propiedad
         self.save()
         if anterior is None:
-            self._registrar(f"Propiedad asignada: {propiedad}.", usuario)
+            self._registrar(f"Propiedad asignada: {propiedad}.")
         else:
-            self._registrar(f"Propiedad cambiada de {anterior.codigo} a {propiedad.codigo}.", usuario)
+            self._registrar(f"Propiedad cambiada de {anterior.codigo} a {propiedad.codigo}.")
 
     # ------------------------------------------------------------------
     # Entrada desde el portal (consulta en una ficha o página «Contacto»)
@@ -192,7 +192,7 @@ class Oferta(Auditado):
         if self.fecha and self.fecha > timezone.localdate():
             raise ValidationError({"fecha": "La fecha no puede ser futura."})
 
-    def registrar(self, usuario):
+    def registrar(self):
         """Guarda la oferta, marca como contraofertada la pendiente de la otra parte,
         pasa la oportunidad a negociación si aún no lo estaba y deja constancia."""
         op = self.oportunidad
@@ -206,11 +206,11 @@ class Oferta(Auditado):
                 respuesta=self.Respuesta.CONTRAOFERTADA)
             self.save()
             op._registrar(f"{self.get_tipo_display()} registrada: {precio(self.monto, self.moneda)} "
-                          f"({self.fecha:%d-%m-%Y}).", usuario)
+                          f"({self.fecha:%d-%m-%Y}).")
             if op.etapa in (Oportunidad.Etapa.NUEVA, Oportunidad.Etapa.CONTACTADO, Oportunidad.Etapa.VISITA):
-                op.cambiar_etapa(Oportunidad.Etapa.NEGOCIACION, usuario)
+                op.cambiar_etapa(Oportunidad.Etapa.NEGOCIACION)
 
-    def responder(self, respuesta, usuario):
+    def responder(self, respuesta):
         if respuesta not in (self.Respuesta.ACEPTADA, self.Respuesta.RECHAZADA):
             raise ValidationError("Respuesta no válida.")
         if self.respuesta != self.Respuesta.PENDIENTE:
@@ -220,7 +220,7 @@ class Oferta(Auditado):
         self.respuesta = respuesta
         self.save()
         self.oportunidad._registrar(f"{self.get_tipo_display()} de {precio(self.monto, self.moneda)} "
-                                    f"{self.get_respuesta_display().lower()}.", usuario)
+                                    f"{self.get_respuesta_display().lower()}.")
 
 
 class Operacion(Auditado):
@@ -314,7 +314,7 @@ class Operacion(Auditado):
             return None, None
         return (Decimal(precio_final) * encargo.comision_pct / 100).quantize(Decimal("0.01")), encargo
 
-    def cerrar(self, usuario):
+    def cerrar(self):
         """Registra el cierre: la oportunidad queda ganada y la propiedad, vendida o arrendada."""
         op = self.oportunidad
         propiedad = op.propiedad
@@ -348,12 +348,12 @@ class Operacion(Auditado):
             propiedad.save()
 
             op._registrar(f"Oportunidad ganada. Operación de {self.get_tipo_display().lower()} "
-                          f"registrada: {self.resumen()}.", usuario)
+                          f"registrada: {self.resumen()}.")
             Actividad.registrar_sistema(f"Estado cambiado de «{anterior}» a «{propiedad.get_estado_display()}» "
-                                        f"por el cierre de la oportunidad #{op.pk}.", usuario, propiedad=propiedad)
+                                        f"por el cierre de la oportunidad #{op.pk}.", propiedad=propiedad)
         return self
 
-    def cerrar_otras_como_perdidas(self, usuario):
+    def cerrar_otras_como_perdidas(self):
         """Marca como perdidas las demás oportunidades abiertas de la propiedad. Solo se hace
         cuando la administradora lo pide; nunca es automático. Devuelve cuántas cerró."""
         if self.estado != self.Estado.VIGENTE:
@@ -363,10 +363,10 @@ class Operacion(Auditado):
                  .exclude(pk=self.oportunidad_id))
         with transaction.atomic():
             for op in otras:
-                op.perder(motivo, usuario)
+                op.perder(motivo)
         return len(otras)
 
-    def anular(self, motivo, usuario):
+    def anular(self, motivo):
         """Anula la operación: la oportunidad vuelve a negociación y la propiedad, a borrador.
         La administradora la vuelve a publicar a mano si corresponde."""
         motivo = (motivo or "").strip()
@@ -391,6 +391,6 @@ class Operacion(Auditado):
                 propiedad.arrendatario = None
             propiedad.save()
 
-            op._registrar(f"Operación anulada. Motivo: {motivo}. La oportunidad vuelve a negociación.", usuario)
+            op._registrar(f"Operación anulada. Motivo: {motivo}. La oportunidad vuelve a negociación.")
             Actividad.registrar_sistema(f"Estado cambiado de «{anterior}» a «{propiedad.get_estado_display()}» "
-                                        f"por la anulación de la operación.", usuario, propiedad=propiedad)
+                                        f"por la anulación de la operación.", propiedad=propiedad)

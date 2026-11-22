@@ -61,7 +61,7 @@ h1, h2, h3, h4, .titulo-marca { font-family: "Montserrat", var(--bs-body-font-fa
 .alert-danger, .alert-warning { background: #fff; border-color: var(--mm-negro); color: var(--mm-negro); font-weight: 500; }
 .invalid-feedback { color: var(--mm-morado-oscuro); font-weight: 500; }
 
-/* Campos con crispy-forms: igual que partials/campo.html (etiqueta semibold y asterisco morado) */
+/* Campos con crispy-forms: etiqueta semibold y asterisco morado en los obligatorios */
 [id^="div_id_"] > .form-label { font-weight: 500; }
 .asteriskField { color: var(--mm-morado); margin-left: .2rem; }
 
