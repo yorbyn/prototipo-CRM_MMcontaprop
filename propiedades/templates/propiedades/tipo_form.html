@@ -1,4 +1,5 @@
 {% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
 {% block titulo_crm %}{% if tipo %}Editar tipo{% else %}Nuevo tipo{% endif %}{% endblock %}
 {% block contenido %}
 <div class="crm-encabezado">
@@ -12,8 +13,8 @@
   <div class="tarjeta-cuerpo">
     <form method="post" novalidate>
       {% csrf_token %}
-      {% include "partials/campo.html" with field=form.nombre %}
-      {% include "partials/campo.html" with field=form.activo %}
+      {{ form.nombre|as_crispy_field }}
+      {{ form.activo|as_crispy_field }}
       <div class="d-flex gap-2 mt-3">
         <button class="btn btn-primary">Guardar</button>
         <a href="{% url 'propiedades:tipos' %}" class="btn btn-light">Cancelar</a>

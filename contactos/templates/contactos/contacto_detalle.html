@@ -10,7 +10,7 @@
   </div>
   <div class="d-flex gap-2">
     {% if contacto.es_propietario %}
-      <a href="{% url 'propiedades:crear-propiedad' %}?propietario={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-house-add"></i> Nueva propiedad</a>
+      <a href="{% url 'propiedades:propiedad_crear' %}?propietario={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-house-add"></i> Nueva propiedad</a>
     {% endif %}
     {% if contacto.email %}
       <a href="{% url 'correo:redactar' %}?contacto={{ contacto.pk }}" class="btn btn-outline-primary"><i class="bi bi-envelope"></i> Enviar correo</a>

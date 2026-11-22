@@ -14,7 +14,7 @@
     <a class="nav-link {% if ruta.app_name == 'core' %}activo{% endif %}" href="{% url 'core:dashboard' %}"><i class="bi bi-grid-1x2"></i> Inicio</a>
 
     <a class="nav-link {% if ruta.app_name == 'actividades' %}activo{% endif %}" href="{% url 'actividades:agenda' %}"><i class="bi bi-calendar-week"></i> Agenda</a>
-    <a class="nav-link {% if ruta.app_name == 'propiedades' and 'tipo' not in ruta.url_name %}activo{% endif %}" href="{% url 'propiedades:lista-propiedad' %}"><i class="bi bi-house-door"></i> Propiedades</a>
+    <a class="nav-link {% if ruta.app_name == 'propiedades' and 'tipo' not in ruta.url_name %}activo{% endif %}" href="{% url 'propiedades:propiedad_lista' %}"><i class="bi bi-house-door"></i> Propiedades</a>
     <a class="nav-link {% if ruta.app_name == 'propiedades' and 'tipo' in ruta.url_name %}activo{% endif %}" href="{% url 'propiedades:tipos' %}"><i class="bi bi-tags"></i> Tipos de propiedad</a>
     <a class="nav-link {% if ruta.app_name == 'contactos' and request.GET.rol == 'propietario' %}activo{% endif %}" href="{% url 'contactos:contacto_lista' %}?rol=propietario"><i class="bi bi-person-badge"></i> Propietarios</a>
     <a class="nav-link {% if ruta.app_name == 'contactos' and request.GET.rol != 'propietario' %}activo{% endif %}" href="{% url 'contactos:contacto_lista' %}"><i class="bi bi-people"></i> Contactos</a>
