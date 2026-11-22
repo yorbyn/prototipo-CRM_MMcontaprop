@@ -134,8 +134,3 @@ EMPRESA = {
 #     Los roles ahora son los modelos Rol y Perfil. Se quitan al regenerar las migraciones ---
 GRUPO_CRM = "Administración CRM"
 GRUPO_TRABAJADORES = "Trabajadores CRM"
-
-# --- Temporales: los usa el límite de envíos del portal, que se quita en el paso 9 ---
-PORTAL_MAX_ENVIOS = 5
-PORTAL_VENTANA_SEGUNDOS = 60 * 60
-PROXIES_CONFIABLES = []

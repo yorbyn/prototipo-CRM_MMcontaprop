@@ -1,7 +1,6 @@
 from django import forms
 from django.db.models import Q
 
-from core.forms import BootstrapMixin
 from propiedades.models import TipoPropiedad
 
 from .models import Encargo, SolicitudCaptacion
@@ -16,9 +15,8 @@ CAMPOS_SOLICITUD_PUBLICOS = [
 ]
 
 
-class SolicitudBaseForm(BootstrapMixin, forms.ModelForm):
-    """Base del formulario del CRM y del portal («Ofrecer mi propiedad»).
-    BootstrapMixin se queda hasta el paso 9: el portal todavía dibuja estos campos sin crispy."""
+class SolicitudBaseForm(forms.ModelForm):
+    """Base del formulario del CRM y del portal («Ofrecer mi propiedad»)."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
