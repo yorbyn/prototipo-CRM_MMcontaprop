@@ -11,7 +11,7 @@
       <a href="{% url 'portal:catalogo' %}?operacion=arriendo" class="text-decoration-none text-dark fw-medium d-none d-sm-inline">Arriendo</a>
       <a href="{% url 'portal:contacto' %}" class="text-decoration-none text-dark fw-medium d-none d-sm-inline">Contacto</a>
       <a href="{% url 'portal:ofrecer' %}" class="text-decoration-none text-morado fw-semibold">Ofrecer mi propiedad</a>
-      {% if EMPRESA.telefono %}<a href="tel:{{ EMPRESA.telefono }}" class="btn btn-primary btn-sm"><i class="bi bi-telephone"></i> {{ EMPRESA.telefono }}</a>{% endif %}
+      {% if EMPRESA.whatsapp %}<a href="https://wa.me/{{ EMPRESA.whatsapp }}" target="_blank" rel="noopener" class="btn btn-primary btn-sm" title="Escríbenos por WhatsApp"><i class="bi bi-whatsapp"></i>  Escríbenos por WhatsApp</a>{% endif %}
     </div>
   </div>
 </nav>
@@ -22,7 +22,8 @@
   <div class="container d-flex flex-wrap justify-content-between gap-3">
     <div><strong>{{ EMPRESA.nombre }}</strong><br>{{ EMPRESA.lema }}<br><a href="{% url 'portal:ofrecer' %}" class="text-white-50">¿Quieres vender o arrendar? Ofrece tu propiedad</a> · <a href="{% url 'portal:contacto' %}" class="text-white-50">Contacto</a></div>
     <div class="text-md-end">
-      {% if EMPRESA.email %}<a href="mailto:{{ EMPRESA.email }}" class="text-white-50">{{ EMPRESA.email }}</a><br>{% endif %}
+      {% if EMPRESA.whatsapp %}<a href="https://wa.me/{{ EMPRESA.whatsapp }}" target="_blank" rel="noopener" class="text-white-50"><i class="bi bi-whatsapp"></i> {{ EMPRESA.telefono }}</a><br>{% endif %}
+      {% if EMPRESA.gmail %}<a href="{{ EMPRESA.gmail }}" target="_blank" rel="noopener" class="text-white-50"><i class="bi bi-envelope"></i> {{ EMPRESA.email }}</a><br>{% endif %}
       <span class="small">© {% now "Y" %} {{ EMPRESA.nombre }}</span>
     </div>
   </div>

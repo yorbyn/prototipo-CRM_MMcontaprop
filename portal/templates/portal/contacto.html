@@ -31,8 +31,8 @@
       <div class="panel-ofrecer">
         <h2 class="h6">{{ EMPRESA.nombre }}</h2>
         <p class="small text-secondary">{{ EMPRESA.lema }}</p>
-        {% if EMPRESA.telefono %}<div class="mb-2"><i class="bi bi-telephone text-morado"></i> <a href="tel:{{ EMPRESA.telefono }}">{{ EMPRESA.telefono }}</a></div>{% endif %} <!-- CAMBIAR HREF DE EMAIL Y TELEFONO A WHATSAPP DIRECTO Y CORREO GOOGLE -->
-        {% if EMPRESA.email %}<div class="mb-2"><i class="bi bi-envelope text-morado"></i> <a href="mailto:{{ EMPRESA.email }}">{{ EMPRESA.email }}</a></div>{% endif %}
+        {% if EMPRESA.whatsapp %}<div class="mb-2"><i class="bi bi-whatsapp text-morado"></i> <a href="https://wa.me/{{ EMPRESA.whatsapp }}" target="_blank" rel="noopener">{{ EMPRESA.telefono }}</a></div>{% endif %}
+        {% if EMPRESA.gmail %}<div class="mb-2"><i class="bi bi-envelope text-morado"></i> <a href="{{ EMPRESA.gmail }}" target="_blank" rel="noopener">{{ EMPRESA.email }}</a></div>{% endif %}
         <hr>
         <p class="small mb-0">¿Quieres vender o arrendar? <a href="{% url 'portal:ofrecer' %}">Ofrece tu propiedad</a>.</p>
       </div>
