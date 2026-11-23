@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from core.models import Auditado
-from core.validators import EXTENSIONES_FOTO, TamanoMaximoValidator, nombre_aleatorio
+from core.validators import EXTENSIONES_FOTO, TamanoMaximoValidator, almacenamiento_privado, nombre_aleatorio
 
 
 class TipoPropiedad(models.Model):
@@ -189,3 +189,29 @@ class FotoPropiedad(models.Model):
     class Meta:
         ordering = ["-es_principal", "orden", "id"]
         verbose_name = "fotografía"
+
+
+def ruta_comprobante(instancia, nombre):
+    return f"comprobantes/{instancia.propiedad_id}/{nombre_aleatorio(nombre)}"
+
+
+class ComprobantePago(Auditado):
+    """Comprobante de pago de una propiedad (arriendo, gastos comunes, contribuciones...).
+    La imagen es privada: se guarda fuera de media/ y solo se ve o descarga desde el CRM."""
+    propiedad = models.ForeignKey(Propiedad, on_delete=models.CASCADE, related_name="comprobantes")
+    nombre = models.CharField("nombre", max_length=150, help_text="Ej.: Arriendo marzo 2026")
+    fecha = models.DateField("fecha", default=timezone.localdate)
+    imagen = models.ImageField(
+        "imagen del comprobante",
+        upload_to=ruta_comprobante,
+        storage=almacenamiento_privado,
+        validators=[FileExtensionValidator(EXTENSIONES_FOTO), TamanoMaximoValidator(settings.MAX_FOTO_MB)],
+    )
+
+    class Meta:
+        ordering = ["-fecha", "-id"]
+        verbose_name = "comprobante de pago"
+        verbose_name_plural = "comprobantes de pago"
+
+    def __str__(self):
+        return f"{self.nombre} ({self.fecha:%d-%m-%Y})"
