@@ -86,9 +86,9 @@ class Propiedad(Auditado):
     banos = models.PositiveSmallIntegerField("baños", null=True, blank=True)
     estacionamientos = models.PositiveSmallIntegerField(null=True, blank=True)
     superficie_util = models.DecimalField("superficie útil (m²)", max_digits=10, decimal_places=2,
-                                          null=True, blank=True)
+                                          null=True, blank=True, validators=[MinValueValidator(1)])
     superficie_total = models.DecimalField("superficie total (m²)", max_digits=10, decimal_places=2,
-                                           null=True, blank=True)
+                                           null=True, blank=True, validators=[MinValueValidator(1)])
     caracteristicas = models.TextField("otras características", blank=True,
                                        help_text="Una por línea. Ej.: Bodega, Logia, Piscina.")
     video_url = models.URLField("enlace de video (opcional)", blank=True)
