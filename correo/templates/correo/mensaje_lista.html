@@ -1,0 +1,26 @@
+{% extends "core/base_crm.html" %}
+{% block titulo_crm %}Correos enviados{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><h1>Correos enviados</h1><div class="sub">Hoy: {{ hoy }} de 500 correos permitidos por Gmail. Cada correo enviado también queda en el historial del contacto.</div></div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'correo:plantillas' %}" class="btn btn-outline-primary"><i class="bi bi-file-text"></i> Plantillas</a>
+    <a href="{% url 'correo:redactar' %}" class="btn btn-primary"><i class="bi bi-envelope-plus"></i> Nuevo correo</a>
+  </div>
+</div>
+{% if en_consola %}<div class="alert alert-info small"><i class="bi bi-terminal"></i> <strong>Modo desarrollo:</strong> los correos no se envían; se muestran en la terminal donde corre <code>runserver</code> y quedan en el historial. Para enviarlos de verdad, complete GMAIL_USUARIO y GMAIL_CONTRASENA_APLICACION en <code>.env</code>.</div>{% endif %}
+<div class="tarjeta"><div class="table-responsive"><table class="table table-crm">
+  <thead><tr><th>Fecha</th><th>Para</th><th>Asunto</th><th class="text-end">Estado</th></tr></thead>
+  <tbody>
+  {% for m in pagina %}
+    <tr>
+      <td class="small text-nowrap">{{ m.creado|date:"d-m-Y H:i" }}</td>
+      <td><a href="{{ m.contacto.get_absolute_url }}">{{ m.contacto }}</a><div class="small text-secondary">{{ m.para }}</div></td>
+      <td class="small">{{ m.asunto }}{% if m.propiedad %} <span class="text-secondary">· {{ m.propiedad.codigo }}</span>{% endif %}
+        {% if m.error %}<div class="text-danger small">{{ m.error|truncatechars:160 }}</div>{% endif %}</td>
+      <td class="text-end"><span class="estado {% if m.estado == 'enviado' %}estado-realizada{% else %}estado-vencida{% endif %}">{{ m.get_estado_display }}</span></td>
+    </tr>
+  {% empty %}<tr><td colspan="4" class="text-center text-secondary p-4">Aún no se han enviado correos.</td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% include "partials/paginacion.html" %}
+{% endblock %}

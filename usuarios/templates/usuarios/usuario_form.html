@@ -1,0 +1,38 @@
+{% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
+{% block titulo_crm %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div>
+    <div class="small text-secondary"><a href="{% url 'usuarios:usuario_lista' %}">Usuarios</a> / {% if usuario_editado %}{{ usuario_editado.username }}{% else %}Nuevo{% endif %}</div>
+    <h1>{{ titulo }}</h1>
+  </div>
+  <a href="{% url 'usuarios:usuario_lista' %}" class="btn btn-light">Cancelar</a>
+</div>
+
+<form method="post" class="validar" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="tarjeta"><div class="tarjeta-titulo">Datos</div><div class="tarjeta-cuerpo"><div class="row">
+        {% if form.username %}<div class="col-md-6">{{ form.username|as_crispy_field }}</div>{% endif %}
+        <div class="col-md-6">{{ form.email|as_crispy_field }}</div>
+        <div class="col-md-6">{{ form.first_name|as_crispy_field }}</div>
+        <div class="col-md-6">{{ form.last_name|as_crispy_field }}</div>
+        {% if form.password1 %}
+        <div class="col-md-6">{{ form.password1|as_crispy_field }}</div>
+        <div class="col-md-6">{{ form.password2|as_crispy_field }}</div>
+        {% endif %}
+      </div></div></div>
+    </div>
+    <div class="col-lg-4">
+      <div class="tarjeta"><div class="tarjeta-titulo">Rol</div><div class="tarjeta-cuerpo">
+        {{ form.rol|as_crispy_field }}
+        <p class="small text-secondary mb-0"><strong>Administrador:</strong> todo el CRM y la gestión de usuarios.<br><strong>Trabajador:</strong> todo el CRM, menos la gestión de usuarios.</p>
+      </div></div>
+      <button class="btn btn-primary w-100 mt-3 py-2"><i class="bi bi-check-lg"></i> Guardar</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

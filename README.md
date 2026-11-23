@@ -18,6 +18,7 @@ Permite administrar internamente contactos, propiedades, captaciones, oportunida
 - [Integrantes](#integrantes)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Instalación y ejecución](#instalación-y-ejecución)
+- [Primer uso](#primer-uso)
 - [Flujo de trabajo en GitHub](#flujo-de-trabajo-en-github)
 
 ## Funcionalidades
@@ -31,7 +32,7 @@ Permite administrar internamente contactos, propiedades, captaciones, oportunida
 - Registro de actividades: notas, llamadas, reuniones, visitas, tareas y correos, además de agenda e indicadores.
 - Documentos privados asociados a contactos, propiedades u operaciones.
 - Envío de correos con plantillas e historial de mensajes.
-- Control de acceso mediante inicio de sesión y permisos.
+- Control de acceso mediante inicio de sesión y roles (Administrador y Trabajador).
 
 **Portal público**
 
@@ -45,17 +46,21 @@ Permite administrar internamente contactos, propiedades, captaciones, oportunida
 | Python | Lenguaje del proyecto |
 | Django | Framework web |
 | Pillow | Manejo de imágenes (fotografías) |
+| python-dotenv | Lectura de la configuración desde el archivo `.env` |
+| django-crispy-forms + crispy-bootstrap5 | Formularios con estilo Bootstrap 5 |
 | Pipenv | Entorno virtual y dependencias |
 | HTML, CSS y Bootstrap | Plantillas e interfaz |
+| Notyf | Mensajes emergentes (éxito, error) en las pantallas |
 | SQLite | Base de datos de desarrollo local |
 
 ## Arquitectura
 
-El sistema es un único proyecto Django organizado en nueve aplicaciones. Cada aplicación mantiene sus propias rutas (`urls.py`) y plantillas.
+El sistema es un único proyecto Django organizado en diez aplicaciones. Cada aplicación mantiene sus propias rutas (`urls.py`), plantillas y registro en el panel `/admin/`. Las vistas son funciones y los formularios, `ModelForm`.
 
 | Aplicación | Responsabilidad |
 |---|---|
-| `core` | Funcionalidades compartidas, modelo abstracto auditado, permisos del CRM, validaciones y controles de seguridad. |
+| `core` | Plantilla base del CRM, inicio y cierre de sesión, decorador de acceso al CRM, modelo abstracto con fechas de creación y modificación, validación de RUT y filtros de formato (precio, RUT). |
+| `usuarios` | Roles (`Rol`) y perfiles (`Perfil`) de quienes entran al CRM, y pantalla de gestión de usuarios para el administrador. |
 | `contactos` | Contactos y preferencias de búsqueda. |
 | `propiedades` | Propiedades y fotografías. |
 | `captacion` | Solicitudes para ofrecer propiedades, fotografías de las solicitudes y encargos. |
@@ -69,19 +74,18 @@ El sistema es un único proyecto Django organizado en nueve aplicaciones. Cada a
 
 | Integrante | GitHub | Rama | Aplicaciones | Responsabilidades |
 |---|---|---|---|---|
-| Yorbyn | [@yorbyn](https://github.com/yorbyn) | `feature/a` | `config`, `core`, `portal` | Configuración inicial, estructura compartida, permisos, login, portal público, README e integración final. |
-| Josué | [@Peschke](https://github.com/Peschke) | `feature/b` | `contactos`, `propiedades`, `documentos` | Contactos, preferencias de búsqueda, propiedades, fotografías y documentos privados. |
-| Sebastián | [@Theluxito](https://github.com/Theluxito) | `feature/c` | `comercial`, `actividades` | Oportunidades, ofertas, operaciones, actividades, agenda e indicadores. |
-| Miguel | *Por confirmar* | `feature/d` | `captacion`, `correo` | Solicitudes de captación, fotografías, encargos, aceptación/rechazo y correo con plantillas e historial. |
+| Yorbyn | [@yorbyn](https://github.com/yorbyn) | `feature/ymollo` | `config`, `core`, `portal` | Configuración inicial, estructura compartida, permisos, login, portal público, README e integración final. |
+| Josué | [@Peschke](https://github.com/Peschke) | `feature/jaraya` | `contactos`, `propiedades`, `documentos` | Contactos, preferencias de búsqueda, propiedades, fotografías y documentos privados. |
+| Sebastián | [@Theluxito](https://github.com/Theluxito) | `feature/sferreira` | `comercial`, `actividades` | Oportunidades, ofertas, operaciones, actividades, agenda e indicadores. |
+| Miguel | [@King-MZ-90](https://github.com/King-MZ-90) | `feature/mdiaz` | `captacion`, `correo` | Solicitudes de captación, fotografías, encargos, aceptación/rechazo y correo con plantillas e historial. |
 
 ## Estructura del proyecto
-
-Estructura orientativa; puede variar según la implementación final.
 
 ```text
 prototipo-CRM_MMcontaprop/
 ├── config/          # Configuración del proyecto Django (settings, urls)
-├── core/
+├── core/            # Base compartida del CRM
+├── usuarios/
 ├── contactos/
 ├── propiedades/
 ├── captacion/
@@ -90,11 +94,17 @@ prototipo-CRM_MMcontaprop/
 ├── documentos/
 ├── correo/
 ├── portal/
+├── templates/       # base.html y plantillas comunes (403, paginación)
+├── static/          # CSS, JavaScript, Bootstrap, íconos y fuentes
+├── media/           # Fotos públicas de las propiedades (no se sube a git)
+├── private_media/   # Documentos y fotos de solicitudes, solo para el CRM (no se sube a git)
 ├── manage.py
 ├── Pipfile
-├── Pipfile.lock
+├── requirements.txt
 └── .env.example
 ```
+
+Cada aplicación sigue la estructura de Django: `models.py`, `forms.py`, `views.py`, `urls.py`, `admin.py`, `tests.py` y `templates/<app>/`. Las plantillas se nombran `<modelo>_lista.html`, `<modelo>_detalle.html` y `<modelo>_form.html`; las que empiezan con `_` son fragmentos que se incluyen en otras.
 
 ## Instalación y ejecución
 
@@ -117,7 +127,13 @@ pipenv run python manage.py runserver
 
 Luego abre `http://127.0.0.1:8000/` en el navegador.
 
-**Variables de entorno:** el archivo `.env` se crea a partir de `.env.example`. Revisa ese archivo para conocer las variables necesarias y completa sus valores antes de ejecutar el proyecto. El archivo `.env` no debe subirse al repositorio.
+**Variables de entorno:** el archivo `.env` se crea a partir de `.env.example` y **debe tener una `SECRET_KEY`**; sin ella, el proyecto no arranca. Para generar una:
+
+```powershell
+py -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Pega el resultado en `.env` como `SECRET_KEY='...'`. Deja `DEBUG=True` y `ALLOWED_HOSTS=127.0.0.1,localhost` para trabajar en local. El archivo `.env` no debe subirse al repositorio.
 
 **Variante:** también puedes activar el entorno virtual y ejecutar los comandos dentro de él:
 
@@ -126,6 +142,28 @@ pipenv shell
 py manage.py migrate
 py manage.py runserver
 ```
+
+**Después de un `git pull`:** si el `Pipfile` cambió, ejecuta `pipenv install`. Si hay migraciones nuevas, ejecuta `pipenv run python manage.py migrate`. Sin esto, el proyecto puede no arrancar o dar errores al guardar.
+
+## Primer uso
+
+La base de datos parte vacía. Antes de usar el CRM:
+
+1. **Crea el administrador** con el administrador de Django:
+
+   ```powershell
+   pipenv run python manage.py createsuperuser
+   ```
+
+   El superusuario siempre es **Administrador** del CRM. Entra en `http://127.0.0.1:8000/crm/`.
+
+2. **Crea los usuarios del equipo** en **Usuarios** (menú lateral, sección Administración), con el rol **Administrador** (todo el CRM y la gestión de usuarios) o **Trabajador** (todo el CRM, menos la gestión de usuarios). Los roles se crean solos la primera vez que se asignan. También se pueden ver y editar en `/admin/` → Roles y Perfiles.
+
+3. **Crea los tipos de propiedad** en **Tipos de propiedad**, por ejemplo: Casa, Departamento, Terreno, Parcela, Oficina, Local comercial y Bodega. Sin al menos un tipo no se pueden registrar propiedades ni solicitudes.
+
+4. **Opcional: plantillas de correo** en **Correos → Plantillas**. Pueden usar variables como `{nombre}`, `{propiedad}`, `{codigo}`, `{precio}` o `{enlace}`, que se reemplazan al enviar.
+
+5. **Opcional: correo real.** Completa `GMAIL_USUARIO` y `GMAIL_CONTRASENA_APLICACION` en `.env` con una **contraseña de aplicación** de Google (requiere verificación en 2 pasos) y **reinicia el servidor**. Sin ellas, los correos se muestran en la terminal donde corre `runserver`.
 
 ## Flujo de trabajo en GitHub
 
@@ -169,3 +207,4 @@ git pull origin develop
 | `style` | Cambios visuales o de formato | `style: ajusta diseño responsivo del portal` |
 | `docs` | Documentación | `docs: actualiza documentación del proyecto` |
 | `test` | Pruebas | `test: agrega pruebas para captación` |
+| `refactor` | Cambio interno del código sin cambiar lo que hace | `refactor(contactos): simplifica vistas y formularios` |

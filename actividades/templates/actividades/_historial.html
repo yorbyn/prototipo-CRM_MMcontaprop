@@ -1,0 +1,46 @@
+{% load crispy_forms_tags %}
+{# Historial de una ficha. Requiere: actividades, form_actividad, form_programar, destino y objeto #}
+<div class="tarjeta" id="historial">
+  <div class="tarjeta-titulo">Historial de gestión
+    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#programar-{{ destino }}" aria-expanded="false"><i class="bi bi-calendar-plus"></i> Programar</button>
+  </div>
+  <div class="tarjeta-cuerpo">
+    <div class="collapse mb-4" id="programar-{{ destino }}">
+      <form method="post" action="{% url 'actividades:programar_en' destino objeto.pk %}" class="p-3 rounded-3 bg-morado-claro">
+        {% csrf_token %}
+        <div class="row g-2">
+          <div class="col-sm-5">{{ form_programar.tipo|as_crispy_field }}</div>
+          <div class="col-sm-7">{{ form_programar.fecha|as_crispy_field }}</div>
+          {% if form_programar.contacto %}<div class="col-12">{{ form_programar.contacto|as_crispy_field }}</div>{% endif %}
+          {% if form_programar.propiedad %}<div class="col-12">{{ form_programar.propiedad|as_crispy_field }}</div>{% endif %}
+          <div class="col-12">{{ form_programar.descripcion|as_crispy_field }}</div>
+        </div>
+        <button class="btn btn-sm btn-primary"><i class="bi bi-calendar-plus"></i> Programar</button>
+        <span class="small text-secondary ms-2">Aparecerá en la agenda hasta marcarla como realizada.</span>
+      </form>
+    </div>
+
+    <form method="post" action="{% url 'actividades:registrar' destino objeto.pk %}" class="mb-4">
+      {% csrf_token %}
+      <div class="d-flex gap-2 mb-2">
+        <div style="max-width:180px">{{ form_actividad.tipo }}</div>
+      </div>
+      {{ form_actividad.descripcion }}
+      <button class="btn btn-sm btn-primary mt-2"><i class="bi bi-journal-plus"></i> Registrar</button>
+    </form>
+    {% for a in actividades %}
+      <div class="nota {% if a.tipo == 'sistema' %}auto{% endif %} {% if a.en_agenda %}d-flex gap-2 justify-content-between align-items-start{% endif %}">
+        <div>
+        <div class="fecha">{{ a.fecha|date:"d-m-Y H:i" }} · {{ a.get_tipo_display }}{% if a.vencida %} · <span class="estado estado-vencida">Vencida</span>{% elif a.en_agenda %} · <strong>programada</strong>{% elif a.estado == 'pendiente' %} · <strong>pendiente</strong>{% endif %}{% if destino == 'contacto' and a.propiedad %} · <a href="{{ a.propiedad.get_absolute_url }}">{{ a.propiedad.codigo }}</a>{% elif destino == 'propiedad' and a.contacto %} · <a href="{{ a.contacto.get_absolute_url }}">{{ a.contacto }}</a>{% endif %}</div>
+        {{ a.descripcion|linebreaksbr }}
+        </div>
+        {% if a.en_agenda %}
+        <form method="post" action="{% url 'actividades:completar' a.pk %}">{% csrf_token %}
+          <input type="hidden" name="next" value="{{ objeto.get_absolute_url }}#historial">
+          <button class="btn btn-sm btn-light text-nowrap" title="Marcar como realizada"><i class="bi bi-check2"></i> Realizada</button>
+        </form>
+        {% endif %}
+      </div>
+    {% empty %}<p class="text-secondary small mb-0">Sin actividades registradas.</p>{% endfor %}
+  </div>
+</div>

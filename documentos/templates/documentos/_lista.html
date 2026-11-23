@@ -1,0 +1,24 @@
+{# Documentos privados de una ficha. Requiere: documentos, form_documento, destino ("contacto", "propiedad" u "operacion") y objeto #}
+<div class="tarjeta mb-3" id="documentos">
+  <div class="tarjeta-titulo">Documentos privados <i class="bi bi-shield-lock text-secondary"></i></div>
+  <div class="tarjeta-cuerpo">
+    {% for d in documentos %}
+      <div class="d-flex align-items-center justify-content-between border-bottom py-2">
+        <a href="{% url 'documentos:descargar' d.pk %}"><i class="bi bi-file-earmark-lock me-1"></i>{{ d.nombre }}</a>
+        <div class="d-flex align-items-center gap-2">
+          <span class="small text-secondary">{{ d.creado|date:"d-m-Y" }}</span>
+          <form method="post" action="{% url 'documentos:eliminar' d.pk %}" data-confirmar="¿Eliminar el documento «{{ d.nombre }}»?">{% csrf_token %}
+            <button class="btn btn-sm btn-link text-reset p-0" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+      </div>
+    {% empty %}<p class="text-secondary small">Sin documentos adjuntos.</p>{% endfor %}
+    <form method="post" enctype="multipart/form-data" action="{% url 'documentos:subir' destino objeto.pk %}" class="mt-3">
+      {% csrf_token %}
+      <div class="mb-2">{{ form_documento.nombre }}</div>
+      <div class="mb-2">{{ form_documento.archivo }}</div>
+      <button class="btn btn-sm btn-dark"><i class="bi bi-paperclip"></i> Adjuntar</button>
+      <div class="small text-secondary mt-1">PDF, imagen, Word o Excel. Máx. 10 MB.</div>
+    </form>
+  </div>
+</div>

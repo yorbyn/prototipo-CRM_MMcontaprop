@@ -1,0 +1,82 @@
+{% extends "core/base_crm.html" %}
+{% load formato %}
+{% block titulo_crm %}Solicitud #{{ solicitud.pk }}{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div>
+    <div class="small text-secondary"><a href="{% url 'captacion:lista' %}">Captación</a> / Solicitud #{{ solicitud.pk }}</div>
+    <h1>{{ solicitud.tipo }} en {{ solicitud.comuna }}</h1>
+    <div class="mt-1 d-flex gap-2 align-items-center flex-wrap">
+      <span class="estado estado-sol-{{ solicitud.estado }}">{{ solicitud.get_estado_display }}</span>
+      <span class="small text-secondary">{{ solicitud.get_origen_display }} · Recibida {{ solicitud.creado|date:"d-m-Y H:i" }}{% if not solicitud.pendiente %} · Evaluada el {{ solicitud.actualizado|date:"d-m-Y" }}{% endif %}</span>
+    </div>
+  </div>
+  {% if solicitud.pendiente %}<a href="{% url 'captacion:editar' solicitud.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Editar</a>{% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Inmueble ofrecido</div>
+      <div class="tarjeta-cuerpo">
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-secondary fw-normal">Operación</dt><dd class="col-sm-8">{{ solicitud.get_operacion_display }}{% if solicitud.modalidad_arriendo %} ({{ solicitud.get_modalidad_arriendo_display|lower }}){% endif %}</dd>
+          <dt class="col-sm-4 text-secondary fw-normal">Ubicación</dt><dd class="col-sm-8">{{ solicitud.comuna }} · zona {{ solicitud.get_zona_display|lower }}</dd>
+          <dt class="col-sm-4 text-secondary fw-normal">Dirección</dt><dd class="col-sm-8"><span class="dato-privado d-inline-block py-1">{{ solicitud.direccion }}</span></dd>
+          <dt class="col-sm-4 text-secondary fw-normal">Dormitorios / baños</dt><dd class="col-sm-8">{{ solicitud.dormitorios|default:"—" }} / {{ solicitud.banos|default:"—" }}</dd>
+          <dt class="col-sm-4 text-secondary fw-normal">Superficie</dt><dd class="col-sm-8">{% if solicitud.superficie_util %}{{ solicitud.superficie_util|floatformat:"-2" }} m² útil{% endif %}{% if solicitud.superficie_util and solicitud.superficie_total %} · {% endif %}{% if solicitud.superficie_total %}{{ solicitud.superficie_total|floatformat:"-2" }} m² total{% endif %}{% if not solicitud.superficie_util and not solicitud.superficie_total %}—{% endif %}</dd>
+          <dt class="col-sm-4 text-secondary fw-normal">Precio esperado</dt><dd class="col-sm-8">{% if solicitud.precio_esperado %}{{ solicitud.precio_esperado|precio:solicitud.moneda }}{% else %}—{% endif %}</dd>
+          <dt class="col-sm-4 text-secondary fw-normal">Comentarios</dt><dd class="col-sm-8 mb-0">{{ solicitud.comentarios|linebreaksbr|default:"—" }}</dd>
+        </dl>
+      </div>
+    </div>
+    {% if fotos_privadas %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Fotos enviadas <span class="small fw-normal text-secondary"><i class="bi bi-lock"></i> privadas hasta publicar la propiedad</span></div>
+      <div class="tarjeta-cuerpo">{% include "captacion/_fotos_privadas.html" %}</div></div>
+    {% endif %}
+    {% if solicitud.observaciones %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Observaciones internas</div>
+      <div class="tarjeta-cuerpo">{{ solicitud.observaciones|linebreaksbr }}</div></div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Propietario <i class="bi bi-lock text-secondary" title="Información privada"></i></div>
+      <div class="tarjeta-cuerpo">
+        <dl class="row mb-0">
+          <dt class="col-4 text-secondary fw-normal">Nombre</dt><dd class="col-8">{{ solicitud.nombre }}</dd>
+          <dt class="col-4 text-secondary fw-normal">RUT</dt><dd class="col-8">{{ solicitud.rut|rut|default:"—" }}</dd>
+          <dt class="col-4 text-secondary fw-normal">Correo</dt><dd class="col-8">{% if solicitud.email %}<a href="mailto:{{ solicitud.email }}">{{ solicitud.email }}</a>{% else %}—{% endif %}</dd>
+          <dt class="col-4 text-secondary fw-normal">Teléfono</dt><dd class="col-8 mb-0">{% if solicitud.telefono %}<a href="tel:{{ solicitud.telefono }}">{{ solicitud.telefono }}</a>{% else %}—{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Evaluación</div>
+      <div class="tarjeta-cuerpo">
+        {% if solicitud.pendiente %}
+          {% if conflicto %}
+            <div class="alert alert-warning small">{{ conflicto }}</div>
+          {% elif coincidencia %}
+            <div class="alert alert-info small mb-3"><i class="bi bi-person-check"></i> Ya existe la ficha <a href="{{ coincidencia.get_absolute_url }}" class="fw-semibold">{{ coincidencia }}</a>. Al aceptar se reutilizará y se marcará como propietario; no se creará un contacto duplicado.</div>
+          {% else %}
+            <p class="small text-secondary">No hay un contacto con este RUT ni este correo: al aceptar se creará la ficha del propietario{% if not solicitud.rut %}, para lo cual falta el RUT{% endif %}.</p>
+          {% endif %}
+          <p class="small text-secondary">Al aceptar se crea la propiedad en <strong>borrador</strong> (no se publica). La descripción comercial y las fotos se agregan después.</p>
+          <div class="d-flex gap-2">
+            <form method="post" action="{% url 'captacion:aceptar' solicitud.pk %}" class="flex-fill" data-confirmar="¿Aceptar la solicitud y crear la propiedad en borrador?">{% csrf_token %}
+              <button class="btn btn-primary w-100"><i class="bi bi-check2-circle"></i> Aceptar</button></form>
+            <form method="post" action="{% url 'captacion:rechazar' solicitud.pk %}" data-confirmar="¿Rechazar esta solicitud?">{% csrf_token %}
+              <button class="btn btn-light"><i class="bi bi-x-circle"></i> Rechazar</button></form>
+          </div>
+        {% elif solicitud.estado == 'aceptada' %}
+          <p class="mb-2">Solicitud aceptada.</p>
+          {% if solicitud.propiedad %}<div>Propiedad: <a href="{{ solicitud.propiedad.get_absolute_url }}" class="fw-semibold">{{ solicitud.propiedad.codigo }}</a></div>{% endif %}
+          {% if solicitud.contacto %}<div>Propietario: <a href="{{ solicitud.contacto.get_absolute_url }}" class="fw-semibold">{{ solicitud.contacto }}</a></div>{% endif %}
+        {% else %}
+          <p class="mb-0 text-secondary">Solicitud rechazada. No se creó ningún contacto ni propiedad.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

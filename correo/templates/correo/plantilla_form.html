@@ -1,0 +1,26 @@
+{% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
+{% block titulo_crm %}Plantilla de correo{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><div class="small text-secondary"><a href="{% url 'correo:plantillas' %}">Plantillas</a> / {% if plantilla.pk %}Editar{% else %}Nueva{% endif %}</div>
+    <h1>{% if plantilla.pk %}{{ plantilla.nombre }}{% else %}Nueva plantilla{% endif %}</h1></div>
+  <a href="{% url 'correo:plantillas' %}" class="btn btn-light">Cancelar</a>
+</div>
+<div class="row g-3">
+  <div class="col-xl-8">
+    <form method="post" class="validar" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+      <div class="tarjeta mb-3"><div class="tarjeta-cuerpo"><div class="row">
+        <div class="col-md-8">{{ form.nombre|as_crispy_field }}</div>
+        <div class="col-md-4">{{ form.clave|as_crispy_field }}</div>
+        <div class="col-12">{{ form.asunto|as_crispy_field }}</div>
+        <div class="col-12">{{ form.cuerpo|as_crispy_field }}</div>
+      </div></div></div>
+      <button class="btn btn-primary px-4"><i class="bi bi-check-lg"></i> Guardar</button>
+    </form>
+  </div>
+  <div class="col-xl-4"><div class="tarjeta"><div class="tarjeta-cuerpo">{% include "correo/_variables.html" %}</div></div></div>
+</div>
+{% endblock %}

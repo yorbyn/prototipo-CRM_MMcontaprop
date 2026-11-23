@@ -1,12 +1,12 @@
-
-from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from django.urls import reverse
 
 from core.models import Auditado
 from core.validators import normalizar_rut, validar_rut
 from propiedades.models import Propiedad
+
 
 class Contacto(Auditado):
     rut = models.CharField(
@@ -33,7 +33,7 @@ class Contacto(Auditado):
         return self.nombre
 
     def get_absolute_url(self):
-        return reverse("contactos:detalle", args=[self.pk])
+        return reverse("contactos:contacto_detalle", args=[self.pk])
 
     @property
     def roles(self):
@@ -47,23 +47,23 @@ class Contacto(Auditado):
         return r
 
     def clean(self):
+        # El RUT se guarda siempre igual («12.345.678-k» -> «12345678-K») para que no se repita
+        # aunque se escriba con o sin puntos. Django revisa que sea único después de esto.
         self.rut = normalizar_rut(self.rut) or None
         if not (self.es_propietario or self.es_arrendatario or self.es_interesado):
             raise ValidationError("Marca al menos un rol para el contacto.")
         if self.es_propietario and not self.rut:
             raise ValidationError({"rut": "El RUT es obligatorio para un propietario."})
 
-    def save(self, *args, **kwargs):
-        self.rut = normalizar_rut(self.rut) or None
-        super().save(*args, **kwargs)
 
 class PreferenciaBusqueda(Auditado):
-    """Qué busca un interesado. Un contacto puede tener varias (por ejemplo, casa en
-    venta en el norte y departamento en arriendo en el centro). Los campos vacíos
-    significan «cualquiera». Se usarán en el cruce de propiedades (etapa 3)."""
+    """Qué busca un interesado. Un contacto puede tener varias (por ejemplo, casa en venta
+    en el norte y departamento en arriendo en el centro). Los campos vacíos significan
+    «cualquiera». Se usan en el cruce de propiedades (comercial/cruce.py)."""
     contacto = models.ForeignKey(Contacto, on_delete=models.CASCADE, related_name="preferencias")
     operacion = models.CharField("operación", max_length=10, choices=Propiedad.Operacion.choices)
-    tipo = models.CharField("tipo de inmueble", max_length=20, blank=True, choices=Propiedad.Tipo.choices)
+    tipo = models.ForeignKey("propiedades.TipoPropiedad", on_delete=models.PROTECT, null=True, blank=True,
+                             related_name="preferencias", verbose_name="tipo de inmueble")
     zona = models.CharField(max_length=10, blank=True, choices=Propiedad.Zona.choices)
     moneda = models.CharField(max_length=3, default="CLP", choices=Propiedad.Moneda.choices)
     precio_min = models.DecimalField("precio desde", max_digits=14, decimal_places=2, null=True, blank=True,

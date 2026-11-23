@@ -67,35 +67,6 @@ EXTENSIONES_FOTO = ["jpg", "jpeg", "png"]
 EXTENSIONES_DOCUMENTO = ["pdf", "jpg", "jpeg", "png", "doc", "docx", "xls", "xlsx"]
 
 
-# Primeros bytes ("firma") que debe tener cada tipo de archivo. Evita, por ejemplo,
-# un ejecutable renombrado como .pdf.
-FIRMAS_ARCHIVO = {
-    "pdf": (b"%PDF",),
-    "jpg": (b"\xff\xd8\xff",),
-    "jpeg": (b"\xff\xd8\xff",),
-    "png": (b"\x89PNG\r\n\x1a\n",),
-    "docx": (b"PK\x03\x04",),
-    "xlsx": (b"PK\x03\x04",),
-    "doc": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
-    "xls": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
-}
-
-
-def validar_contenido_archivo(archivo):
-    """Comprueba que el contenido real del archivo corresponde a su extensión."""
-    if not archivo:
-        return
-    ext = os.path.splitext(archivo.name)[1].lower().lstrip(".")
-    firmas = FIRMAS_ARCHIVO.get(ext)
-    if not firmas:
-        return  # la extensión la valida FileExtensionValidator
-    archivo.seek(0)
-    cabecera = archivo.read(8)
-    archivo.seek(0)
-    if not any(cabecera.startswith(f) for f in firmas):
-        raise ValidationError("El contenido del archivo no corresponde a su extensión.")
-
-
 class AlmacenamientoPrivado(FileSystemStorage):
     """Archivos fuera de MEDIA_ROOT y sin URL pública. La ruta se lee de
     settings.PRIVATE_MEDIA_ROOT en cada uso (permite cambiarla en pruebas)."""

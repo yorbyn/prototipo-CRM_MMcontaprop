@@ -1,0 +1,25 @@
+{% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
+{% block titulo_crm %}{% if tipo %}Editar tipo{% else %}Nuevo tipo{% endif %}{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div>
+    <div class="small text-secondary"><a href="{% url 'propiedades:tipos' %}">Tipos de propiedad</a> / {% if tipo %}{{ tipo.nombre }}{% else %}Nuevo{% endif %}</div>
+    <h1>{% if tipo %}Editar «{{ tipo.nombre }}»{% else %}Nuevo tipo de propiedad{% endif %}</h1>
+  </div>
+</div>
+
+<div class="tarjeta" style="max-width: 560px">
+  <div class="tarjeta-cuerpo">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.nombre|as_crispy_field }}
+      {{ form.activo|as_crispy_field }}
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary">Guardar</button>
+        <a href="{% url 'propiedades:tipos' %}" class="btn btn-light">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

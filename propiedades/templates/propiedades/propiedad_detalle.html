@@ -1,0 +1,138 @@
+{% extends "core/base_crm.html" %}
+{% load formato %}
+{% block titulo_crm %}{{ propiedad.codigo }}{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div>
+    <div class="small text-secondary"><a href="{% url 'propiedades:propiedad_lista' %}">Propiedades</a> / {{ propiedad.codigo }}</div>
+    <h1>{{ propiedad.titulo }}</h1>
+    <div class="mt-1 d-flex gap-2 align-items-center flex-wrap">
+      <span class="estado estado-{{ propiedad.estado }}">{{ propiedad.get_estado_display }}</span>
+      <span class="small text-secondary">{{ propiedad.tipo }} · {{ propiedad.get_operacion_display }}{% if propiedad.modalidad_arriendo %} ({{ propiedad.get_modalidad_arriendo_display|lower }}){% endif %} · Actualizada {{ propiedad.actualizado|date:"d-m-Y H:i" }}{% if solicitud %} · Desde la <a href="{{ solicitud.get_absolute_url }}">solicitud #{{ solicitud.pk }}</a>{% endif %}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if propiedad.publicada %}<a href="{% url 'portal:ficha' propiedad.codigo %}" target="_blank" rel="noopener" class="btn btn-outline-primary"><i class="bi bi-eye"></i> Ver en el portal</a>{% endif %}
+    <a href="{% url 'correo:redactar' %}?propiedad={{ propiedad.pk }}&volver=propiedad" class="btn btn-outline-primary"><i class="bi bi-envelope"></i> Enviar ficha</a>
+    <a href="{% url 'propiedades:propiedad_editar' propiedad.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="tarjeta mb-3" id="fotos"><div class="tarjeta-titulo">Fotografías <span class="small fw-normal text-secondary">{{ fotos|length }} foto{{ fotos|length|pluralize }}</span></div>
+      <div class="tarjeta-cuerpo">
+        {% if fotos %}
+        <div class="galeria-crm mb-3">
+          {% for f in fotos %}
+            <div class="foto {% if f.es_principal %}principal{% endif %}">
+              <img src="{{ f.imagen.url }}" alt="Foto {{ forloop.counter }}">
+              <div class="acciones">
+                {% if f.es_principal %}<span class="badge bg-morado me-auto align-self-center">Principal</span>{% else %}
+                <form method="post" action="{% url 'propiedades:foto_principal' f.pk %}" class="me-auto">{% csrf_token %}<button class="btn btn-sm btn-light" title="Usar como principal"><i class="bi bi-star"></i></button></form>{% endif %}
+                <form method="post" action="{% url 'propiedades:eliminar_foto' f.pk %}" data-confirmar="¿Eliminar esta fotografía?">{% csrf_token %}<button class="btn btn-sm btn-light" title="Eliminar"><i class="bi bi-trash"></i></button></form>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if fotos_privadas %}
+          <div class="small fw-semibold mb-2"><i class="bi bi-lock"></i> Fotos enviadas por el propietario <span class="fw-normal text-secondary">(privadas: pasan a la galería al publicar)</span></div>
+          {% include "captacion/_fotos_privadas.html" with volver="propiedad" %}
+        {% endif %}
+        <form method="post" enctype="multipart/form-data" action="{% url 'propiedades:subir_fotos' propiedad.pk %}" class="d-flex gap-2 flex-wrap align-items-center">
+          {% csrf_token %}
+          <div class="flex-fill"><input type="file" name="imagenes" class="form-control" accept=".jpg,.jpeg,.png" multiple required></div>
+          <button class="btn btn-dark"><i class="bi bi-upload"></i> Subir fotos</button>
+          <div class="w-100 small text-secondary">Puedes seleccionar varias a la vez. JPG o PNG, máx. 5 MB cada una. La foto principal es la portada en el portal.</div>
+        </form>
+      </div>
+    </div>
+
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Ficha comercial</div>
+      <div class="tarjeta-cuerpo">
+        <div class="row g-3 mb-3">
+          <div class="col-sm-4"><div class="small text-secondary">Precio</div><div class="fs-4 fw-bold">{{ propiedad.precio|precio:propiedad.moneda }}</div></div>
+          <div class="col-4 col-sm-2"><div class="small text-secondary">Dormitorios</div><div class="fs-5">{{ propiedad.dormitorios|default:"—" }}</div></div>
+          <div class="col-4 col-sm-2"><div class="small text-secondary">Baños</div><div class="fs-5">{{ propiedad.banos|default:"—" }}</div></div>
+          <div class="col-4 col-sm-2"><div class="small text-secondary">Estacionam.</div><div class="fs-5">{{ propiedad.estacionamientos|default:"—" }}</div></div>
+        </div>
+        <div class="small text-secondary">Descripción</div>
+        <p>{{ propiedad.descripcion|linebreaksbr|default:"Sin descripción." }}</p>
+      </div>
+    </div>
+
+    {% include "actividades/_historial.html" %}
+  </div>
+
+  <div class="col-xl-4">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Estado y publicación</div>
+      <div class="tarjeta-cuerpo">
+        <form method="post" action="{% url 'propiedades:cambiar_estado' propiedad.pk %}" class="d-flex gap-2">
+          {% csrf_token %}
+          {{ form_estado.estado }}
+          <button class="btn btn-dark">Cambiar</button>
+        </form>
+        <p class="small text-secondary mt-2 mb-0">Solo las propiedades en estado <strong>Disponible</strong> aparecen en el portal. Vendida, arrendada, anulada o borrador se ocultan automáticamente.</p>
+        {% if errores_publicar and not propiedad.publicada %}
+          <div class="alert alert-warning small mt-3 mb-0"><strong>Para publicar falta:</strong><ul class="mb-0 ps-3">{% for e in errores_publicar %}<li>{{ e }}</li>{% endfor %}</ul></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="tarjeta mb-3" id="encargos"><div class="tarjeta-titulo">Encargos de corretaje
+      <a href="{% url 'captacion:encargo_crear' propiedad.pk %}" class="small fw-normal"><i class="bi bi-plus-lg"></i> Nuevo</a></div>
+      <table class="table table-crm"><tbody>
+        {% for e in encargos %}
+          <tr>
+            <td class="small">{{ e.comision_texto }} % · {% if e.exclusividad %}con{% else %}sin{% endif %} exclusividad
+              <div class="text-secondary">{{ e.fecha_inicio|date:"d-m-Y" }} al {{ e.fecha_vencimiento|date:"d-m-Y" }}</div></td>
+            <td class="text-end text-nowrap"><span class="estado estado-{{ e.estado_vigencia }}">{{ e.estado_vigencia|capfirst }}</span>
+              <a href="{% url 'captacion:encargo_editar' e.pk %}" class="btn btn-sm btn-light ms-1" title="Editar"><i class="bi bi-pencil"></i></a></td>
+          </tr>
+        {% empty %}<tr><td class="text-secondary small">Sin encargo de corretaje registrado.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Datos privados <i class="bi bi-shield-lock text-secondary"></i></div>
+      <div class="tarjeta-cuerpo">
+        <div class="dato-privado mb-3"><div class="small text-secondary">Dirección exacta</div>{{ propiedad.direccion_exacta }}</div>
+        <div class="small text-secondary">Se muestra en el portal</div>
+        <div class="mb-3">{{ propiedad.get_zona_display }} · {{ propiedad.comuna }}{% if propiedad.sector_publico %} · {{ propiedad.sector_publico }}{% endif %}</div>
+        <div class="small text-secondary">Propietario</div>
+        <div class="mb-3 fw-semibold">{{ propiedad.propietario }}
+          <div class="small fw-normal">{{ propiedad.propietario.rut|rut }}{% if propiedad.propietario.telefono %} · {{ propiedad.propietario.telefono }}{% endif %}</div></div>
+      </div>
+    </div>
+
+    {% include "documentos/_lista.html" %}
+
+    {% include "comercial/_oportunidades.html" with mostrar="contacto" nueva_param="propiedad" nueva_id=propiedad.pk %}
+
+    {% if interesados %}
+    <div class="tarjeta mb-3" id="cruce"><div class="tarjeta-titulo">Interesados que buscan algo así <span class="small fw-normal text-secondary">{{ interesados|length }}</span></div>
+      <table class="table table-crm"><tbody>
+        {% for i in interesados %}
+          <tr>
+            <td><a href="{{ i.contacto.get_absolute_url }}" class="fw-semibold">{{ i.contacto }}</a>
+              <div class="small text-secondary">{{ i.contacto.email|default:i.contacto.telefono }}</div></td>
+            <td class="text-end">
+              {% if i.oportunidad %}<a href="{{ i.oportunidad.get_absolute_url }}" class="small">Oportunidad #{{ i.oportunidad.pk }}</a>
+              {% elif propiedad.publicada %}
+              <form method="post" action="{% url 'comercial:crear_desde_cruce' %}">{% csrf_token %}
+                <input type="hidden" name="contacto" value="{{ i.contacto.pk }}">
+                <input type="hidden" name="propiedad" value="{{ propiedad.pk }}">
+                <input type="hidden" name="volver" value="propiedad">
+                <button class="btn btn-sm btn-outline-primary text-nowrap"><i class="bi bi-plus-lg"></i> Oportunidad</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

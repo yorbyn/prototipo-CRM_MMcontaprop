@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    path("admin/", admin.site.urls),
     path("crm/", include("core.urls")),
     path("crm/contactos/", include("contactos.urls")),
     path("crm/propiedades/", include("propiedades.urls")),
@@ -11,6 +13,7 @@ urlpatterns = [
     path("crm/captacion/", include("captacion.urls")),
     path("crm/comercial/", include("comercial.urls")),
     path("crm/correo/", include("correo.urls")),
+    path("crm/usuarios/", include("usuarios.urls")),
     path("", include("portal.urls")),
 ]
 

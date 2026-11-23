@@ -1,0 +1,18 @@
+{% extends "core/base_crm.html" %}
+{% block titulo_crm %}Preferencia de búsqueda{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div>
+    <div class="small text-secondary"><a href="{{ contacto.get_absolute_url }}">{{ contacto }}</a> / Preferencia de búsqueda</div>
+    <h1>Editar preferencia de búsqueda</h1>
+    <div class="sub">Deje un campo vacío para indicar «cualquiera».</div>
+  </div>
+  <a href="{{ contacto.get_absolute_url }}#preferencias" class="btn btn-light">Cancelar</a>
+</div>
+<form method="post" class="validar" novalidate style="max-width: 860px">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="tarjeta mb-3"><div class="tarjeta-cuerpo">{% include "contactos/_preferencia_campos.html" %}</div></div>
+  <button class="btn btn-primary px-4"><i class="bi bi-check-lg"></i> Guardar</button>
+</form>
+{% endblock %}

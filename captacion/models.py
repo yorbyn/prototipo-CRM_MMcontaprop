@@ -1,27 +1,28 @@
 """
 Captación de propiedades.
 
-- SolicitudCaptacion: un propietario ofrece su inmueble (desde el portal o
-  ingresada a mano). La administradora la evalúa; al aceptarla se crea o
-  reutiliza el contacto (por RUT o correo) y se crea la propiedad en borrador.
-- Encargo: el encargo de corretaje de una propiedad (comisión, exclusividad,
-  inicio y vencimiento).
+- SolicitudCaptacion: un propietario ofrece su inmueble (desde el portal o ingresada a mano).
+  La administradora la evalúa; al aceptarla se crea o reutiliza el contacto (por RUT o correo)
+  y se crea la propiedad en borrador.
+- Encargo: el encargo de corretaje de una propiedad (comisión, exclusividad, inicio y vencimiento).
+- FotoSolicitud: fotos que envía el propietario. Son privadas hasta que la propiedad se publica.
 
-Todo lo que llega desde el portal queda «por evaluar»: nada se crea ni se
-publica sin intervención de la administradora.
+Todo lo que llega desde el portal queda «por evaluar»: nada se crea ni se publica sin la administradora.
 """
+import os
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.files import File
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.db.models import Max
 from django.urls import reverse
 from django.utils import timezone
 
-from django.conf import settings
-from django.core.validators import FileExtensionValidator
-
-from core.imagenes import limpiar_imagen
+from actividades.models import Actividad
+from contactos.models import Contacto
 from core.models import Auditado
 from core.validators import (
     EXTENSIONES_FOTO,
@@ -29,10 +30,9 @@ from core.validators import (
     almacenamiento_privado,
     nombre_aleatorio,
     normalizar_rut,
-    validar_contenido_archivo,
     validar_rut,
 )
-from propiedades.models import Propiedad
+from propiedades.models import FotoPropiedad, Propiedad, TipoPropiedad
 
 
 class SolicitudCaptacion(Auditado):
@@ -56,7 +56,8 @@ class SolicitudCaptacion(Auditado):
     telefono = models.CharField("teléfono", max_length=30, blank=True)
 
     # --- Datos del inmueble ---
-    tipo = models.CharField("tipo de inmueble", max_length=20, choices=Propiedad.Tipo.choices)
+    tipo = models.ForeignKey(TipoPropiedad, on_delete=models.PROTECT, related_name="solicitudes",
+                             verbose_name="tipo de inmueble")
     operacion = models.CharField("operación", max_length=10, choices=Propiedad.Operacion.choices)
     modalidad_arriendo = models.CharField("modalidad de arriendo", max_length=12, blank=True,
                                           choices=Propiedad.ModalidadArriendo.choices)
@@ -100,19 +101,16 @@ class SolicitudCaptacion(Auditado):
         return self.estado == self.Estado.PENDIENTE
 
     def clean(self):
+        # Se guardan siempre igual: RUT «12345678-K», correo en minúsculas y comuna sin espacios dobles.
         self.rut = normalizar_rut(self.rut)
+        self.email = (self.email or "").strip().lower()
+        self.comuna = " ".join((self.comuna or "").split())
         if not (self.email or self.telefono):
             raise ValidationError("Indique al menos un correo o un teléfono de contacto.")
         if self.operacion == Propiedad.Operacion.VENTA:
             self.modalidad_arriendo = ""
-        if (self.superficie_util and self.superficie_total
-                and self.superficie_util > self.superficie_total):
+        if self.superficie_util and self.superficie_total and self.superficie_util > self.superficie_total:
             raise ValidationError({"superficie_util": "La superficie útil no puede superar la total."})
-
-    def save(self, *args, **kwargs):
-        self.rut = normalizar_rut(self.rut)
-        self.email = (self.email or "").strip().lower()
-        super().save(*args, **kwargs)
 
     # ------------------------------------------------------------------
     # Evaluación
@@ -121,10 +119,8 @@ class SolicitudCaptacion(Auditado):
     def buscar_contacto(self):
         """Contacto existente para esta solicitud: primero por RUT, luego por correo.
 
-        Devuelve (contacto o None, error o None). Si el correo coincide con una
-        ficha que tiene OTRO RUT, no se adivina: se informa el conflicto."""
-        from contactos.models import Contacto
-
+        Devuelve (contacto o None, error o None). Si el correo coincide con una ficha
+        que tiene OTRO RUT, no se adivina: se informa el conflicto."""
         if self.rut:
             por_rut = Contacto.objects.filter(rut=self.rut).first()
             if por_rut:
@@ -142,30 +138,23 @@ class SolicitudCaptacion(Auditado):
                 return contacto, None
         return None, None
 
-    def aceptar(self, usuario):
+    def aceptar(self):
         """Crea o reutiliza el contacto propietario y crea la propiedad en borrador.
-
         Devuelve la propiedad creada. Lanza ValidationError si no se puede aceptar."""
-        from actividades.models import Actividad
-        from contactos.models import Contacto
+        if not self.pendiente:
+            raise ValidationError("Esta solicitud ya fue evaluada.")
+        contacto, error = self.buscar_contacto()
+        if error:
+            raise ValidationError(error)
 
+        # transaction.atomic(): o se guarda todo (contacto, propiedad y solicitud) o nada.
         with transaction.atomic():
-            # Bloquea la fila para que dos clics simultáneos no creen dos propiedades.
-            actual = SolicitudCaptacion.objects.select_for_update().get(pk=self.pk)
-            if actual.estado != self.Estado.PENDIENTE:
-                raise ValidationError("Esta solicitud ya fue evaluada.")
-
-            contacto, error = self.buscar_contacto()
-            if error:
-                raise ValidationError(error)
-
             if contacto is None:
                 if not self.rut:
                     raise ValidationError("Para registrar al propietario se necesita su RUT. "
                                           "Edite la solicitud y agréguelo.")
-                contacto = Contacto(nombre=self.nombre, rut=self.rut, email=self.email,
-                                    telefono=self.telefono, es_propietario=True)
-                contacto.guardar_por(usuario)
+                contacto = Contacto.objects.create(nombre=self.nombre, rut=self.rut, email=self.email,
+                                                   telefono=self.telefono, es_propietario=True)
                 reutilizado = False
             else:
                 # Se completa la ficha existente sin sobrescribir datos ya registrados.
@@ -181,44 +170,41 @@ class SolicitudCaptacion(Auditado):
                     contacto.telefono = self.telefono
                 if not contacto.email and self.email:
                     contacto.email = self.email
-                contacto.guardar_por(usuario)
+                contacto.save()
                 reutilizado = True
 
-            propiedad = Propiedad(
-                titulo=f"{self.get_tipo_display()} en {self.comuna}"[:120],
+            propiedad = Propiedad.objects.create(
+                titulo=f"{self.tipo.nombre} en {self.comuna}"[:120],
                 tipo=self.tipo, operacion=self.operacion, modalidad_arriendo=self.modalidad_arriendo,
                 precio=self.precio_esperado, moneda=self.moneda,
                 dormitorios=self.dormitorios, banos=self.banos,
                 superficie_util=self.superficie_util, superficie_total=self.superficie_total,
                 zona=self.zona, comuna=self.comuna, direccion_exacta=self.direccion,
                 propietario=contacto, estado=Propiedad.Estado.BORRADOR,
-                # La descripción comercial la redacta la administradora: los
-                # comentarios del propietario pueden traer datos privados.
+                # La descripción comercial la redacta la administradora: los comentarios
+                # del propietario pueden traer datos privados.
                 descripcion="",
             )
-            propiedad.guardar_por(usuario)
 
             self.estado = self.Estado.ACEPTADA
             self.contacto = contacto
             self.propiedad = propiedad
-            self.guardar_por(usuario)
+            self.save()
 
             Actividad.registrar_sistema(
                 f"Propiedad creada en estado Borrador desde la solicitud de captación #{self.pk}.",
-                usuario, contacto=contacto, propiedad=propiedad,
+                contacto=contacto, propiedad=propiedad,
             )
             if reutilizado:
-                Actividad.registrar_sistema(
-                    f"Solicitud de captación #{self.pk} aceptada; se reutilizó esta ficha.",
-                    usuario, contacto=contacto,
-                )
+                Actividad.registrar_sistema(f"Solicitud de captación #{self.pk} aceptada; se reutilizó esta ficha.",
+                                            contacto=contacto)
         return propiedad
 
-    def rechazar(self, usuario):
-        if self.estado != self.Estado.PENDIENTE:
+    def rechazar(self):
+        if not self.pendiente:
             raise ValidationError("Esta solicitud ya fue evaluada.")
         self.estado = self.Estado.RECHAZADA
-        self.guardar_por(usuario)
+        self.save()
 
 
 class Encargo(Auditado):
@@ -245,28 +231,25 @@ class Encargo(Auditado):
         if self.fecha_inicio and self.fecha_vencimiento:
             if self.fecha_vencimiento <= self.fecha_inicio:
                 raise ValidationError({"fecha_vencimiento": "El vencimiento debe ser posterior al inicio."})
-            if self.propiedad_id:
-                cruzados = Encargo.objects.filter(
-                    propiedad_id=self.propiedad_id,
-                    fecha_inicio__lte=self.fecha_vencimiento,
-                    fecha_vencimiento__gte=self.fecha_inicio,
-                ).exclude(pk=self.pk)
-                if cruzados.exists():
-                    raise ValidationError("Las fechas se cruzan con otro encargo de esta propiedad. "
-                                          "Para renovar, el nuevo encargo debe comenzar después del vencimiento anterior.")
+            # Dos encargos de la misma propiedad no pueden tener fechas que se crucen.
+            cruzados = Encargo.objects.filter(
+                propiedad_id=self.propiedad_id,
+                fecha_inicio__lte=self.fecha_vencimiento,
+                fecha_vencimiento__gte=self.fecha_inicio,
+            ).exclude(pk=self.pk)
+            if cruzados.exists():
+                raise ValidationError("Las fechas se cruzan con otro encargo de esta propiedad. "
+                                      "Para renovar, el nuevo encargo debe comenzar después del vencimiento anterior.")
 
     @property
     def estado_vigencia(self):
+        """«futuro», «vigente» o «vencido» (coincide con las clases CSS estado-...)."""
         hoy = timezone.localdate()
         if hoy < self.fecha_inicio:
             return "futuro"
         if hoy > self.fecha_vencimiento:
             return "vencido"
         return "vigente"
-
-    @property
-    def dias_para_vencer(self):
-        return (self.fecha_vencimiento - timezone.localdate()).days
 
     @property
     def comision_texto(self):
@@ -277,8 +260,8 @@ class Encargo(Auditado):
         return texto.replace(".", ",")
 
     def resumen(self):
-        excl = "con exclusividad" if self.exclusividad else "sin exclusividad"
-        return (f"comisión {self.comision_texto} %, {excl}, del "
+        exclusividad = "con exclusividad" if self.exclusividad else "sin exclusividad"
+        return (f"comisión {self.comision_texto} %, {exclusividad}, del "
                 f"{self.fecha_inicio:%d-%m-%Y} al {self.fecha_vencimiento:%d-%m-%Y}")
 
 
@@ -294,14 +277,12 @@ def ruta_foto_solicitud(instancia, nombre):
 
 
 class FotoSolicitud(models.Model):
-    """Foto que envía el propietario. Se guarda fuera de MEDIA (sin URL pública) y
-    solo se ve en el CRM. Al publicar la propiedad se copia, sin metadatos, a la
-    galería pública."""
+    """Foto que envía el propietario. Se guarda fuera de media/ (sin URL pública) y solo se ve
+    en el CRM. Al publicar la propiedad se copia a la galería pública."""
     solicitud = models.ForeignKey(SolicitudCaptacion, on_delete=models.CASCADE, related_name="fotos")
     imagen = models.ImageField(
         upload_to=ruta_foto_solicitud, storage=almacenamiento_privado,
-        validators=[FileExtensionValidator(EXTENSIONES_FOTO), TamanoMaximoValidator(settings.MAX_FOTO_MB),
-                    validar_contenido_archivo],
+        validators=[FileExtensionValidator(EXTENSIONES_FOTO), TamanoMaximoValidator(settings.MAX_FOTO_MB)],
     )
     copiada_a = models.OneToOneField("propiedades.FotoPropiedad", on_delete=models.SET_NULL, null=True, blank=True,
                                      editable=False, related_name="origen_solicitud")
@@ -312,12 +293,6 @@ class FotoSolicitud(models.Model):
         verbose_name = "foto de la solicitud"
         verbose_name_plural = "fotos de la solicitud"
 
-    def delete(self, *args, **kwargs):
-        archivo = self.imagen
-        super().delete(*args, **kwargs)
-        if archivo:
-            archivo.storage.delete(archivo.name)
-
 
 def fotos_solicitud_pendientes(propiedad):
     """Fotos privadas de la solicitud de origen que aún no pasan a la galería pública."""
@@ -325,21 +300,16 @@ def fotos_solicitud_pendientes(propiedad):
 
 
 def publicar_fotos_solicitud(propiedad):
-    """Copia a la galería pública las fotos privadas de la solicitud. Se llama solo
-    al publicar la propiedad. Devuelve cuántas se copiaron."""
-    from django.db.models import Max
-
-    from propiedades.models import FotoPropiedad
-
+    """Copia a la galería pública (media/) las fotos privadas de la solicitud.
+    Se llama al publicar la propiedad. Devuelve cuántas se copiaron."""
     pendientes = list(fotos_solicitud_pendientes(propiedad))
-    if not pendientes:
-        return 0
     orden = (propiedad.fotos.aggregate(m=Max("orden"))["m"] or 0) + 1
     sin_principal = not propiedad.fotos.filter(es_principal=True).exists()
     for i, foto in enumerate(pendientes):
         publica = FotoPropiedad(propiedad=propiedad, orden=orden + i, es_principal=sin_principal and i == 0)
-        publica.imagen.save("foto", limpiar_imagen(foto.imagen), save=False)
+        with foto.imagen.open("rb") as archivo:
+            publica.imagen.save(os.path.basename(foto.imagen.name), File(archivo), save=False)
         publica.save()
         foto.copiada_a = publica
-        foto.save(update_fields=["copiada_a"])
+        foto.save()
     return len(pendientes)

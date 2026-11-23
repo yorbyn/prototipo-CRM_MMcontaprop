@@ -1,0 +1,37 @@
+{% extends "core/base_crm.html" %}
+{% block titulo_crm %}Usuarios{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><h1>Usuarios</h1><div class="sub">Quiénes pueden entrar al CRM. Los administradores además gestionan usuarios; los trabajadores usan el resto del CRM.</div></div>
+  <a href="{% url 'usuarios:usuario_crear' %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Nuevo usuario</a>
+</div>
+
+<div class="tarjeta">
+  <div class="table-responsive">
+    <table class="table table-crm">
+      <thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+      {% for u, rol in filas %}
+        <tr>
+          <td class="fw-semibold">{{ u.get_full_name|default:"—" }}</td>
+          <td>{{ u.username }}{% if u == request.user %} <span class="small text-secondary">(tú)</span>{% endif %}</td>
+          <td>{{ u.email|default:"—" }}</td>
+          <td>{% if rol == "Administrador" %}<span class="badge bg-morado-claro text-morado">Administrador</span>{% elif rol == "Trabajador" %}<span class="badge text-bg-light">Trabajador</span>{% else %}—{% endif %}</td>
+          <td>{% if u.is_active %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
+          <td class="text-end text-nowrap">
+            <a href="{% url 'usuarios:usuario_editar' u.pk %}" class="btn btn-sm btn-light" title="Editar"><i class="bi bi-pencil"></i></a>
+            {% if u != request.user %}
+            <form method="post" action="{% url 'usuarios:usuario_activar' u.pk %}" class="d-inline">{% csrf_token %}
+              <button class="btn btn-sm btn-light" title="{% if u.is_active %}Desactivar{% else %}Activar{% endif %}"><i class="bi {% if u.is_active %}bi-person-slash{% else %}bi-person-check{% endif %}"></i></button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-secondary p-4">Todavía no hay usuarios.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

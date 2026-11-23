@@ -1,0 +1,11 @@
+{# Campos del formulario de preferencia. Requiere: form #}
+{% load crispy_forms_tags %}
+<div class="row g-2">
+  <div class="col-md-4">{{ form.operacion|as_crispy_field }}</div>
+  <div class="col-md-4">{{ form.tipo|as_crispy_field }}</div>
+  <div class="col-md-4">{{ form.zona|as_crispy_field }}</div>
+  <div class="col-md-3">{{ form.dormitorios_min|as_crispy_field }}</div>
+  <div class="col-md-3">{{ form.moneda|as_crispy_field }}</div>
+  <div class="col-6 col-md-3">{{ form.precio_min|as_crispy_field }}</div>
+  <div class="col-6 col-md-3">{{ form.precio_max|as_crispy_field }}</div>
+</div>

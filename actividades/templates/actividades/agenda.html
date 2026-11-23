@@ -1,0 +1,53 @@
+{% extends "core/base_crm.html" %}
+{% load crispy_forms_tags %}
+{% block titulo_crm %}Agenda{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><h1>Agenda</h1><div class="sub">Visitas y tareas pendientes. Al marcarlas como realizadas quedan en el historial de la propiedad y del contacto.</div></div>
+  <div class="btn-group">
+    <a href="?" class="btn {% if not tipo %}btn-dark{% else %}btn-light{% endif %}">Todo</a>
+    <a href="?tipo=visita" class="btn {% if tipo == 'visita' %}btn-dark{% else %}btn-light{% endif %}">Visitas</a>
+    <a href="?tipo=tarea" class="btn {% if tipo == 'tarea' %}btn-dark{% else %}btn-light{% endif %}">Tareas</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    {% if vencidas %}
+    <div class="tarjeta mb-3 borde-morado"><div class="tarjeta-titulo">Vencidas <span class="estado estado-vencida">{{ vencidas|length }}</span></div>
+      <div class="tarjeta-cuerpo">{% for a in vencidas %}{% include "actividades/_item_agenda.html" %}{% endfor %}</div></div>
+    {% endif %}
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Hoy</div>
+      <div class="tarjeta-cuerpo">{% for a in hoy %}{% include "actividades/_item_agenda.html" %}{% empty %}<p class="text-secondary small mb-0">Nada más programado para hoy.</p>{% endfor %}</div></div>
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Próximas <span class="small fw-normal text-secondary">{{ n_proximas }}</span></div>
+      <div class="tarjeta-cuerpo">{% for a in proximas %}{% include "actividades/_item_agenda.html" %}{% empty %}<p class="text-secondary small mb-0">No hay visitas ni tareas programadas.</p>{% endfor %}
+      {% if n_proximas > 100 %}<p class="small text-secondary mb-0">Se muestran las 100 más cercanas.</p>{% endif %}</div></div>
+  </div>
+  <div class="col-xl-4">
+    <div class="tarjeta mb-3"><div class="tarjeta-titulo">Programar visita o tarea</div>
+      <div class="tarjeta-cuerpo">
+        <form method="post" action="{% url 'actividades:programar' %}">
+          {% csrf_token %}
+          {% if form.non_field_errors %}<div class="alert alert-danger small">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+          {{ form.tipo|as_crispy_field }}
+          {{ form.fecha|as_crispy_field }}
+          {{ form.propiedad|as_crispy_field }}
+          {{ form.contacto|as_crispy_field }}
+          {{ form.descripcion|as_crispy_field }}
+          <button class="btn btn-primary w-100"><i class="bi bi-calendar-plus"></i> Programar</button>
+          <p class="small text-secondary mt-2 mb-0">Una visita requiere propiedad y contacto. Una tarea, al menos uno de los dos.</p>
+        </form>
+      </div>
+    </div>
+    {% if realizadas %}
+    <div class="tarjeta"><div class="tarjeta-titulo">Realizadas esta semana</div>
+      <div class="tarjeta-cuerpo">
+        {% for a in realizadas %}
+          <div class="nota"><div class="fecha">{{ a.fecha|date:"d-m-Y H:i" }} · {{ a.get_tipo_display }}{% if a.propiedad %} · {{ a.propiedad.codigo }}{% endif %}{% if a.contacto %} · {{ a.contacto }}{% endif %}</div><div class="small">{{ a.descripcion|truncatechars:80 }}</div></div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "core/base_crm.html" %}
+{% block titulo_crm %}Oportunidades{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><h1>Oportunidades</h1><div class="sub">Cada negocio en curso entre un interesado y una propiedad. Las consultas del portal y la página de contacto llegan aquí como «Nueva».</div></div>
+  <a href="{% url 'comercial:crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nueva oportunidad</a>
+</div>
+
+<div class="filtros">
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <a href="?etapa=abiertas" class="btn btn-sm {% if vista == 'abiertas' %}btn-dark{% else %}btn-light{% endif %}">Abiertas · {{ n_abiertas }}</a>
+    {% for p in pestanas %}
+      <a href="?etapa={{ p.clave }}" class="btn btn-sm {% if vista == p.clave %}btn-dark{% else %}btn-light{% endif %}">{{ p.nombre }} · {{ p.total }}</a>
+    {% endfor %}
+    <a href="?etapa=todas" class="btn btn-sm {% if vista == 'todas' %}btn-dark{% else %}btn-light{% endif %}">Todas</a>
+  </div>
+  <form method="get" class="d-flex flex-wrap gap-2">
+    <input type="hidden" name="etapa" value="{{ vista }}">
+    <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width:320px" placeholder="Interesado, correo o propiedad">
+    <select name="origen" class="form-select" style="max-width:240px">
+      <option value="">Todos los orígenes</option>
+      {% for v, n in origenes %}<option value="{{ v }}" {% if origen == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-dark"><i class="bi bi-search"></i> Filtrar</button>
+  </form>
+</div>
+
+<div class="tarjeta">
+  <div class="table-responsive">
+    <table class="table table-crm">
+      <thead><tr><th>#</th><th>Interesado</th><th>Propiedad</th><th>Origen</th><th>Creada</th><th class="text-end">Etapa</th></tr></thead>
+      <tbody>
+      {% for o in pagina %}
+        <tr>
+          <td><a href="{{ o.get_absolute_url }}" class="fw-semibold">#{{ o.pk }}</a></td>
+          <td><a href="{{ o.get_absolute_url }}">{{ o.contacto }}</a><div class="small text-secondary">{{ o.contacto.email|default:o.contacto.telefono }}</div></td>
+          <td class="small">{% if o.propiedad %}{{ o.propiedad.codigo }}<div class="text-secondary">{{ o.propiedad.titulo|truncatechars:35 }}</div>{% else %}<span class="text-secondary">Sin propiedad</span>{% endif %}</td>
+          <td class="small">{{ o.get_origen_display }}</td>
+          <td class="small text-nowrap">{{ o.creado|date:"d-m-Y H:i" }}</td>
+          <td class="text-end"><span class="estado estado-op-{{ o.etapa }}">{{ o.get_etapa_display }}</span></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-secondary p-4">No hay oportunidades en esta vista.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/paginacion.html" %}
+{% endblock %}

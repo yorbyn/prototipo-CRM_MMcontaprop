@@ -11,3 +11,4 @@ staticfiles/
 Pipfile.lock
 # Respaldos locales (python manage.py respaldar)
 respaldos/
+.vscode

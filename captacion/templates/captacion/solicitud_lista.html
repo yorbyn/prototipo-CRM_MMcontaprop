@@ -1,0 +1,46 @@
+{% extends "core/base_crm.html" %}
+{% block titulo_crm %}Captación{% endblock %}
+{% block contenido %}
+<div class="crm-encabezado">
+  <div><h1>Captación</h1><div class="sub">Propiedades ofrecidas por sus dueños desde el portal o registradas a mano. Nada se crea hasta que usted acepte la solicitud.</div></div>
+  <a href="{% url 'captacion:crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nueva solicitud</a>
+</div>
+
+<div class="filtros d-flex flex-wrap gap-2 align-items-center">
+  <div class="btn-group">
+    <a href="?estado=pendientes" class="btn {% if estado == 'pendientes' %}btn-dark{% else %}btn-light{% endif %}">Por evaluar{% if n_pendientes %} · {{ n_pendientes }}{% endif %}</a>
+    <a href="?estado=aceptadas" class="btn {% if estado == 'aceptadas' %}btn-dark{% else %}btn-light{% endif %}">Aceptadas</a>
+    <a href="?estado=rechazadas" class="btn {% if estado == 'rechazadas' %}btn-dark{% else %}btn-light{% endif %}">Rechazadas</a>
+    <a href="?estado=todas" class="btn {% if estado == 'todas' %}btn-dark{% else %}btn-light{% endif %}">Todas</a>
+  </div>
+  <form method="get" class="d-flex gap-2 ms-auto">
+    <input type="hidden" name="estado" value="{{ estado }}">
+    <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Nombre, RUT, correo o comuna">
+    <button class="btn btn-dark"><i class="bi bi-search"></i></button>
+  </form>
+</div>
+
+<div class="tarjeta">
+  <div class="table-responsive">
+    <table class="table table-crm">
+      <thead><tr><th>#</th><th>Recibida</th><th>Propietario</th><th>Inmueble</th><th>Origen</th><th class="text-end">Estado</th></tr></thead>
+      <tbody>
+      {% for s in pagina %}
+        <tr>
+          <td><a href="{{ s.get_absolute_url }}" class="fw-semibold">#{{ s.pk }}</a></td>
+          <td class="small text-nowrap">{{ s.creado|date:"d-m-Y H:i" }}</td>
+          <td><a href="{{ s.get_absolute_url }}">{{ s.nombre }}</a><div class="small text-secondary">{{ s.email|default:s.telefono }}</div></td>
+          <td class="small">{{ s.tipo }} en {{ s.get_operacion_display|lower }}<div class="text-secondary">{{ s.comuna }} · {{ s.get_zona_display }}</div></td>
+          <td class="small">{{ s.get_origen_display }}</td>
+          <td class="text-end"><span class="estado estado-sol-{{ s.estado }}">{{ s.get_estado_display }}</span>
+            {% if s.propiedad %}<div class="small mt-1"><a href="{{ s.propiedad.get_absolute_url }}">{{ s.propiedad.codigo }}</a></div>{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-secondary p-4">No hay solicitudes en esta vista.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/paginacion.html" %}
+{% endblock %}
