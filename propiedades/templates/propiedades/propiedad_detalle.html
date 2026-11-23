@@ -108,6 +108,8 @@
 
     {% include "documentos/_lista.html" %}
 
+    {% include "propiedades/_comprobantes.html" %}
+
     {% include "comercial/_oportunidades.html" with mostrar="contacto" nueva_param="propiedad" nueva_id=propiedad.pk %}
 
     {% if interesados %}

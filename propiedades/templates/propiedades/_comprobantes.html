@@ -1,0 +1,68 @@
+{# Comprobantes de pago de una propiedad. Requiere: propiedad, comprobantes y form_comprobante #}
+<div class="tarjeta mb-3" id="comprobantes">
+  <div class="tarjeta-titulo">Comprobantes de pago <i class="bi bi-shield-lock text-secondary"></i>
+    <span class="small fw-normal text-secondary">{{ comprobantes|length }}</span></div>
+  <div class="tarjeta-cuerpo">
+    {% for c in comprobantes %}
+      <div class="d-flex align-items-center justify-content-between border-bottom py-2 gap-2">
+        <div class="text-truncate">
+          <div class="fw-semibold text-truncate"><i class="bi bi-receipt me-1"></i>{{ c.nombre }}</div>
+          <div class="small text-secondary">{{ c.fecha|date:"d-m-Y" }}</div>
+        </div>
+        <div class="d-flex align-items-center gap-1 text-nowrap">
+          <button type="button" class="btn btn-sm btn-light" title="Ver"
+                  data-bs-toggle="modal" data-bs-target="#modal-comprobante"
+                  data-imagen="{% url 'propiedades:comprobante_ver' c.pk %}"
+                  data-titulo="{{ c.nombre }} · {{ c.fecha|date:'d-m-Y' }}"
+                  data-descargar="{% url 'propiedades:comprobante_descargar' c.pk %}"><i class="bi bi-eye"></i></button>
+          <a href="{% url 'propiedades:comprobante_descargar' c.pk %}" class="btn btn-sm btn-light" title="Descargar"><i class="bi bi-download"></i></a>
+          <form method="post" action="{% url 'propiedades:comprobante_eliminar' c.pk %}" data-confirmar="¿Eliminar el comprobante «{{ c.nombre }}»?">{% csrf_token %}
+            <button class="btn btn-sm btn-light" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+      </div>
+    {% empty %}<p class="text-secondary small">Sin comprobantes de pago.</p>{% endfor %}
+
+    <form method="post" enctype="multipart/form-data" action="{% url 'propiedades:comprobante_subir' propiedad.pk %}" class="mt-3">
+      {% csrf_token %}
+      <div class="mb-2">{{ form_comprobante.nombre }}</div>
+      <div class="mb-2">{{ form_comprobante.fecha }}</div>
+      <div class="mb-2">{{ form_comprobante.imagen }}</div>
+      <button class="btn btn-sm btn-dark"><i class="bi bi-paperclip"></i> Agregar comprobante</button>
+      <div class="small text-secondary mt-1">Imagen JPG o PNG. Máx. 5 MB.</div>
+    </form>
+  </div>
+</div>
+
+{# Un solo modal para todos los comprobantes: al abrirlo, toma la imagen del botón «Ver» que se pulsó #}
+<div class="modal fade" id="modal-comprobante" tabindex="-1" aria-labelledby="modal-comprobante-titulo" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal-comprobante-titulo">Comprobante de pago</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="" alt="Comprobante de pago" class="img-fluid rounded">
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-outline-primary" data-accion="descargar"><i class="bi bi-download"></i> Descargar</a>
+        <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function () {
+    const modal = document.getElementById("modal-comprobante");
+    modal.addEventListener("show.bs.modal", function (evento) {
+      const boton = evento.relatedTarget;  // el botón «Ver» que abrió el modal
+      modal.querySelector("img").src = boton.dataset.imagen;
+      modal.querySelector(".modal-title").textContent = boton.dataset.titulo;
+      modal.querySelector("[data-accion=descargar]").href = boton.dataset.descargar;
+    });
+    modal.addEventListener("hidden.bs.modal", function () {
+      modal.querySelector("img").src = "";  // al cerrar, se quita la imagen
+    });
+  })();
+</script>

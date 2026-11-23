@@ -1,7 +1,10 @@
+import os
+
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Max, Q
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -13,8 +16,15 @@ from comercial.models import Operacion
 from core.permisos import crm_requerido
 from documentos.forms import DocumentoForm
 
-from .forms import CambioEstadoForm, FiltroPropiedadesForm, FotoForm, PropiedadForm, TipoPropiedadForm
-from .models import FotoPropiedad, Propiedad, TipoPropiedad
+from .forms import (
+    CambioEstadoForm,
+    ComprobantePagoForm,
+    FiltroPropiedadesForm,
+    FotoForm,
+    PropiedadForm,
+    TipoPropiedadForm,
+)
+from .models import ComprobantePago, FotoPropiedad, Propiedad, TipoPropiedad
 
 
 # ---------------------------------------------------------------------------
@@ -94,6 +104,8 @@ def propiedad_detalle(request, pk):
         "destino": "propiedad",
         "documentos": propiedad.documentos.all(),
         "form_documento": DocumentoForm(),
+        "comprobantes": propiedad.comprobantes.all(),
+        "form_comprobante": ComprobantePagoForm(),
         "actividades": propiedad.actividades.select_related("contacto")[:80],
         "form_actividad": ActividadForm(),
         "form_programar": ProgramarForm(fijo="propiedad"),
@@ -256,3 +268,55 @@ def tipo_eliminar(request, clave):
         tipo.delete()
         messages.success(request, f"Tipo «{tipo}» eliminado.")
     return redirect("propiedades:tipos")
+
+
+# ---------------------------------------------------------------------------
+# Comprobantes de pago (imágenes privadas: fuera de media/, solo desde el CRM)
+# ---------------------------------------------------------------------------
+
+@crm_requerido
+@require_POST
+def comprobante_subir(request, pk):
+    propiedad = get_object_or_404(Propiedad, pk=pk)
+    # La propiedad la fija el servidor (desde la URL), nunca el formulario.
+    form = ComprobantePagoForm(request.POST, request.FILES, instance=ComprobantePago(propiedad=propiedad))
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Comprobante de pago agregado.")
+    else:
+        for errores in form.errors.values():
+            for error in errores:
+                messages.error(request, error)
+    return redirect(propiedad.get_absolute_url() + "#comprobantes")
+
+
+def _archivo_comprobante(pk, descargar):
+    """Entrega la imagen. descargar=False: el navegador la muestra (la usa el modal «Ver»).
+    descargar=True: el navegador la guarda como archivo con el nombre del comprobante."""
+    comprobante = get_object_or_404(ComprobantePago, pk=pk)
+    imagen = comprobante.imagen
+    if not imagen.storage.exists(imagen.name):
+        raise Http404("El archivo no existe.")
+    extension = os.path.splitext(imagen.name)[1]
+    return FileResponse(imagen.open("rb"), as_attachment=descargar, filename=f"{comprobante.nombre}{extension}")
+
+
+@crm_requerido
+def comprobante_ver(request, pk):
+    return _archivo_comprobante(pk, descargar=False)
+
+
+@crm_requerido
+def comprobante_descargar(request, pk):
+    return _archivo_comprobante(pk, descargar=True)
+
+
+@crm_requerido
+@require_POST
+def comprobante_eliminar(request, pk):
+    comprobante = get_object_or_404(ComprobantePago, pk=pk)
+    propiedad = comprobante.propiedad
+    comprobante.imagen.delete(save=False)  # borra la imagen del disco
+    comprobante.delete()                   # borra el registro de la base de datos
+    messages.success(request, "Comprobante de pago eliminado.")
+    return redirect(propiedad.get_absolute_url() + "#comprobantes")

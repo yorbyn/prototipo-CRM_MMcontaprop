@@ -15,6 +15,11 @@ urlpatterns = [
     path("fotos/<int:foto_id>/principal/", views.foto_principal, name="foto_principal"),
     path("fotos/<int:foto_id>/eliminar/", views.eliminar_foto, name="eliminar_foto"),
 
+    path("<int:pk>/comprobantes/subir/", views.comprobante_subir, name="comprobante_subir"),
+    path("comprobantes/<int:pk>/ver/", views.comprobante_ver, name="comprobante_ver"),
+    path("comprobantes/<int:pk>/descargar/", views.comprobante_descargar, name="comprobante_descargar"),
+    path("comprobantes/<int:pk>/eliminar/", views.comprobante_eliminar, name="comprobante_eliminar"),
+
     path("tipos/", views.tipos, name="tipos"),
     path("tipos/nuevo/", views.tipo_editar, name="tipo_crear"),
     path("tipos/<slug:clave>/editar/", views.tipo_editar, name="tipo_editar"),

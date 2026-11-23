@@ -4,7 +4,7 @@ from django.utils.text import slugify
 
 from contactos.models import Contacto
 
-from .models import FotoPropiedad, Propiedad, TipoPropiedad
+from .models import ComprobantePago, FotoPropiedad, Propiedad, TipoPropiedad
 
 
 class PropiedadForm(forms.ModelForm):
@@ -83,3 +83,16 @@ class TipoPropiedadForm(forms.ModelForm):
         if not self.instance.pk and otros.filter(clave=slugify(nombre)[:30]).exists():
             raise forms.ValidationError("Ya existe un tipo con un nombre equivalente.")
         return nombre
+
+
+class ComprobantePagoForm(forms.ModelForm):
+    """Se dibuja campo por campo en la ficha de la propiedad, por eso cada widget trae su clase.
+    La propiedad no se pregunta: la fija la vista."""
+    class Meta:
+        model = ComprobantePago
+        fields = ["nombre", "fecha", "imagen"]
+        widgets = {
+            "nombre": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre (ej.: Arriendo marzo 2026)"}),
+            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "imagen": forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".jpg,.jpeg,.png"}),
+        }
