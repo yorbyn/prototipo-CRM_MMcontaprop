@@ -4,8 +4,9 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Cargar las variables del archivo .env
-load_dotenv(BASE_DIR / ".env")
+# Cargar las variables del archivo .env. override=True: el .env manda aunque la terminal
+# ya tenga esas variables (por ejemplo, las que carga «pipenv shell» al abrirse).
+load_dotenv(BASE_DIR / ".env", override=True)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
@@ -129,3 +130,7 @@ EMPRESA = {
     "telefono": os.getenv("EMPRESA_TELEFONO", ""),
     "email": os.getenv("EMPRESA_EMAIL", ""),
 }
+# Para el enlace de WhatsApp (wa.me) el número va solo con dígitos: «+56 9 1234 5678» -> «56912345678».
+EMPRESA["whatsapp"] = "".join(c for c in EMPRESA["telefono"] if c.isdigit())
+# Enlace que abre Gmail en la web con un correo nuevo dirigido a la empresa.
+EMPRESA["gmail"] = f"https://mail.google.com/mail/?view=cm&fs=1&to={EMPRESA['email']}" if EMPRESA["email"] else ""
